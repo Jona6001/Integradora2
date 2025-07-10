@@ -1,0 +1,93 @@
+/* Variables del tema claro */
+:root {
+  --primary: #D2691E;
+  --secondary: #8B4513;
+  --accent: #FF6B35;
+  --bg-primary: #F8F9FA;
+  --bg-secondary: #FFFFFF;
+  --text-primary: #2D3748;
+  --text-secondary: #4A5568;
+  --text-muted: #718096;
+  --border: #E2E8F0;
+  --shadow: rgba(0, 0, 0, 0.1);
+  --gradient-start: #D2691E;
+  --gradient-end: #8B4513;
+}
+
+/* Variables del tema oscuro */
+[data-theme="dark"] {
+  --primary: #FF8C42;
+  --secondary: #D2691E;
+  --accent: #FF6B35;
+  --bg-primary: #1A202C;
+  --bg-secondary: #2D3748;
+  --text-primary: #F7FAFC;
+  --text-secondary: #E2E8F0;
+  --text-muted: #A0AEC0;
+  --border: #4A5568;
+  --shadow: rgba(0, 0, 0, 0.3);
+  --gradient-start: #FF8C42;
+  --gradient-end: #D2691E;
+}
+
+/* Transiciones suaves para el cambio de tema */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Clases utilitarias para temas */
+.bg-theme-primary {
+  background-color: var(--bg-primary);
+}
+
+.bg-theme-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.text-theme-primary {
+  color: var(--text-primary);
+}
+
+.text-theme-secondary {
+  color: var(--text-secondary);
+}
+
+.text-theme-muted {
+  color: var(--text-muted);
+}
+
+.border-theme {
+  border-color: var(--border);
+}
+
+.bg-gradient-theme {
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+}
+
+/* Estilos específicos para el tema oscuro */
+[data-theme="dark"] .shadow-lg {
+  box-shadow: 0 10px 25px -3px var(--shadow), 0 4px 6px -2px var(--shadow);
+}
+
+[data-theme="dark"] .backdrop-blur-sm {
+  background-color: rgba(45, 55, 72, 0.8);
+}
+
+[data-theme="dark"] .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .bg-white\/95 {
+  background-color: rgba(45, 55, 72, 0.95);
+}
+
+/* Animaciones mejoradas */
+@keyframes theme-transition {
+  0% { opacity: 0.8; }
+  50% { opacity: 0.9; }
+  100% { opacity: 1; }
+}
+
+[data-theme="dark"] * {
+  animation: theme-transition 0.3s ease-in-out;
+}
