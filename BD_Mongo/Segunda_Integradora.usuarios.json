@@ -1,0 +1,17 @@
+[{
+  "_id": {
+    "$oid": "686c453e296ac69976f55817"
+  },
+  "nombre": "Jona",
+  "apellidos": "Rios",
+  "role": "admin",
+  "telefono": "6182948250",
+  "direccion": "Sinaloa #601",
+  "password": "$2b$10$.CPUtcfQiGwOC8j865u4geQs.1v9xv2rkb8RT8qi4/RBAIM0Qe3xy",
+  "email": "jonathanrios601@gmail.com",
+  "status": "activo",
+  "creadoEn": {
+    "$date": "2025-07-07T22:07:58.738Z"
+  },
+  "__v": 0
+}]

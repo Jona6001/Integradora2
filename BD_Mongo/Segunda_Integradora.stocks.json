@@ -1,0 +1,21 @@
+[{
+  "_id": 1,
+  "producto": "Coca-Cola",
+  "cantidad": 29,
+  "unidad": "piezas",
+  "status": "activo",
+  "actualizadoEn": {
+    "$date": "2025-07-09T22:45:28.240Z"
+  }
+},
+{
+  "_id": 2,
+  "producto": "Pan",
+  "cantidad": 42,
+  "unidad": "piezas",
+  "status": "activo",
+  "actualizadoEn": {
+    "$date": "2025-07-09T22:45:28.208Z"
+  },
+  "__v": 0
+}]

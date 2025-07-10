@@ -1,0 +1,109 @@
+[{
+  "_id": 1,
+  "nombre": "Torta de Pierna SENCILLA",
+  "precio": 70,
+  "tipo": "torta",
+  "status": "activo",
+  "creadoEn": {
+    "$date": "2025-06-28T15:20:46.939Z"
+  }
+},
+{
+  "_id": 2,
+  "nombre": "Torta de Pierna MIXTO",
+  "precio": 80,
+  "tipo": "torta",
+  "status": "activo",
+  "creadoEn": {
+    "$date": "2025-06-28T18:31:10.974Z"
+  },
+  "__v": 0
+},
+{
+  "_id": 3,
+  "nombre": "Torta de Pierna TRIPLE",
+  "precio": 80,
+  "tipo": "torta",
+  "status": "activo",
+  "creadoEn": {
+    "$date": "2025-07-09T20:21:15.782Z"
+  },
+  "__v": 0
+},
+{
+  "_id": 4,
+  "nombre": "Torta de Adobada SENCILLA",
+  "precio": 70,
+  "tipo": "torta",
+  "status": "activo",
+  "creadoEn": {
+    "$date": "2025-07-09T21:31:27.751Z"
+  },
+  "__v": 0
+},
+{
+  "_id": 5,
+  "nombre": "Torta de Adobada MIXTO",
+  "precio": 75,
+  "tipo": "torta",
+  "status": "activo",
+  "creadoEn": {
+    "$date": "2025-07-09T21:32:20.007Z"
+  },
+  "__v": 0
+},
+{
+  "_id": 6,
+  "nombre": "Torta de Adobada TRIPLE",
+  "precio": 80,
+  "tipo": "torta",
+  "status": "activo",
+  "creadoEn": {
+    "$date": "2025-07-09T21:33:22.603Z"
+  },
+  "__v": 0
+},
+{
+  "_id": 7,
+  "nombre": "Torta de Asada SENCILLA",
+  "precio": 70,
+  "tipo": "torta",
+  "status": "activo",
+  "creadoEn": {
+    "$date": "2025-07-09T21:33:59.737Z"
+  },
+  "__v": 0
+},
+{
+  "_id": 8,
+  "nombre": "Torta de Asada MIXTO",
+  "precio": 75,
+  "tipo": "torta",
+  "status": "activo",
+  "creadoEn": {
+    "$date": "2025-07-09T21:34:24.903Z"
+  },
+  "__v": 0
+},
+{
+  "_id": 9,
+  "nombre": "Torta de Asada TRIPLE",
+  "precio": 80,
+  "tipo": "torta",
+  "status": "activo",
+  "creadoEn": {
+    "$date": "2025-07-09T21:35:01.819Z"
+  },
+  "__v": 0
+},
+{
+  "_id": 10,
+  "nombre": "Coca-Cola",
+  "precio": 25,
+  "tipo": "bebida",
+  "status": "activo",
+  "creadoEn": {
+    "$date": "2025-07-09T21:35:38.798Z"
+  },
+  "__v": 0
+}]

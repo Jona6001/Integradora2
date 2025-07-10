@@ -1,0 +1,321 @@
+[{
+  "_id": {
+    "$oid": "68600c33d63552e6ace99779"
+  },
+  "fecha": {
+    "$date": "2025-06-28T15:37:23.566Z"
+  },
+  "productos": [
+    {
+      "producto_id": 1,
+      "nombre": "Torta de Pierna sencilla",
+      "cantidad": 1,
+      "precio_unitario": 70,
+      "subtotal": 70
+    }
+  ],
+  "total": 70,
+  "vendedor_id": 1,
+  "status": "activo"
+},
+{
+  "_id": {
+    "$oid": "68603f2a5daa3901cdcfc6e1"
+  },
+  "fecha": {
+    "$date": "2025-06-28T19:14:50.060Z"
+  },
+  "productos": [
+    {
+      "producto_id": 1,
+      "nombre": "Torta de pierna MIXTA",
+      "cantidad": 2,
+      "precio_unitario": 75,
+      "subtotal": 150
+    },
+    {
+      "producto_id": 2,
+      "nombre": "Agua Fresca",
+      "cantidad": 2,
+      "precio_unitario": 50,
+      "subtotal": 50
+    }
+  ],
+  "total": 200,
+  "vendedor_id": 1,
+  "status": "inactivo",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "686ed49c4320d360fbe7fea0"
+  },
+  "fecha": {
+    "$date": "2025-07-09T20:44:12.774Z"
+  },
+  "productos": [
+    {
+      "producto_id": 1,
+      "nombre": "Torta de Pierna SENCILLA",
+      "cantidad": 1,
+      "precio_unitario": 70,
+      "subtotal": 70
+    },
+    {
+      "producto_id": 3,
+      "nombre": "Torta de pierna TRIPLE",
+      "cantidad": 2,
+      "precio_unitario": 80,
+      "subtotal": 160
+    }
+  ],
+  "total": 230,
+  "vendedor_id": 1,
+  "status": "activo",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "686edd0a4320d360fbe7ff1a"
+  },
+  "fecha": {
+    "$date": "2025-07-09T21:20:10.049Z"
+  },
+  "productos": [
+    {
+      "producto_id": 1,
+      "nombre": "Torta de Pierna SENCILLA",
+      "cantidad": 1,
+      "precio_unitario": 70,
+      "subtotal": 70
+    }
+  ],
+  "total": 70,
+  "vendedor_id": 1,
+  "status": "activo",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "686ee2eb4320d360fbe7ff8c"
+  },
+  "fecha": {
+    "$date": "2025-07-09T21:45:15.550Z"
+  },
+  "productos": [
+    {
+      "producto_id": 1,
+      "nombre": "Torta de Pierna SENCILLA",
+      "cantidad": 1,
+      "precio_unitario": 70,
+      "subtotal": 80
+    }
+  ],
+  "total": 80,
+  "vendedor_id": 1,
+  "status": "activo",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "686ee2fe4320d360fbe7ff9b"
+  },
+  "fecha": {
+    "$date": "2025-07-09T21:45:34.511Z"
+  },
+  "productos": [
+    {
+      "producto_id": 3,
+      "nombre": "Torta de Pierna TRIPLE",
+      "cantidad": 1,
+      "precio_unitario": 80,
+      "subtotal": 80
+    }
+  ],
+  "total": 80,
+  "vendedor_id": 1,
+  "status": "activo",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "686ee5264320d360fbe7ffeb"
+  },
+  "fecha": {
+    "$date": "2025-07-09T21:54:46.484Z"
+  },
+  "productos": [
+    {
+      "producto_id": 1,
+      "nombre": "Torta de Pierna SENCILLA",
+      "cantidad": 1,
+      "precio_unitario": 70,
+      "subtotal": 75
+    }
+  ],
+  "total": 75,
+  "vendedor_id": 1,
+  "status": "activo",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "686ee56c4320d360fbe7fffa"
+  },
+  "fecha": {
+    "$date": "2025-07-09T21:55:56.005Z"
+  },
+  "productos": [
+    {
+      "producto_id": 10,
+      "nombre": "Coca-Cola",
+      "cantidad": 1,
+      "precio_unitario": 25,
+      "subtotal": 25
+    },
+    {
+      "producto_id": 8,
+      "nombre": "Torta de Asada MIXTO",
+      "cantidad": 1,
+      "precio_unitario": 75,
+      "subtotal": 75
+    }
+  ],
+  "total": 100,
+  "vendedor_id": 1,
+  "status": "activo",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "686ee73b4320d360fbe80016"
+  },
+  "fecha": {
+    "$date": "2025-07-09T22:03:39.700Z"
+  },
+  "productos": [
+    {
+      "producto_id": 1,
+      "nombre": "Torta de Pierna SENCILLA",
+      "cantidad": 1,
+      "precio_unitario": 70,
+      "subtotal": 70
+    },
+    {
+      "producto_id": 10,
+      "nombre": "Coca-Cola",
+      "cantidad": 1,
+      "precio_unitario": 25,
+      "subtotal": 25
+    }
+  ],
+  "total": 95,
+  "vendedor_id": 1,
+  "status": "activo",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "686eec6b4320d360fbe80033"
+  },
+  "fecha": {
+    "$date": "2025-07-09T22:25:47.796Z"
+  },
+  "productos": [
+    {
+      "producto_id": 1,
+      "nombre": "Torta de Pierna SENCILLA",
+      "cantidad": 1,
+      "precio_unitario": 70,
+      "subtotal": 70
+    },
+    {
+      "producto_id": 10,
+      "nombre": "Coca-Cola",
+      "cantidad": 1,
+      "precio_unitario": 25,
+      "subtotal": 25
+    }
+  ],
+  "total": 95,
+  "vendedor_id": 1,
+  "status": "activo",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "686eeca94320d360fbe80048"
+  },
+  "fecha": {
+    "$date": "2025-07-09T22:26:49.124Z"
+  },
+  "productos": [
+    {
+      "producto_id": 2,
+      "nombre": "Torta de Pierna MIXTO",
+      "cantidad": 1,
+      "precio_unitario": 80,
+      "subtotal": 85
+    },
+    {
+      "producto_id": 10,
+      "nombre": "Coca-Cola",
+      "cantidad": 1,
+      "precio_unitario": 25,
+      "subtotal": 25
+    }
+  ],
+  "total": 110,
+  "vendedor_id": 1,
+  "status": "activo",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "686ef0fde9de1dacab237388"
+  },
+  "fecha": {
+    "$date": "2025-07-09T22:45:17.775Z"
+  },
+  "productos": [
+    {
+      "producto_id": 1,
+      "nombre": "Torta de Pierna SENCILLA",
+      "cantidad": 1,
+      "precio_unitario": 70,
+      "subtotal": 70
+    }
+  ],
+  "total": 70,
+  "vendedor_id": 1,
+  "status": "activo",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "686ef108e9de1dacab237399"
+  },
+  "fecha": {
+    "$date": "2025-07-09T22:45:28.196Z"
+  },
+  "productos": [
+    {
+      "producto_id": 2,
+      "nombre": "Torta de Pierna MIXTO",
+      "cantidad": 1,
+      "precio_unitario": 80,
+      "subtotal": 80
+    },
+    {
+      "producto_id": 10,
+      "nombre": "Coca-Cola",
+      "cantidad": 1,
+      "precio_unitario": 25,
+      "subtotal": 25
+    }
+  ],
+  "total": 105,
+  "vendedor_id": 1,
+  "status": "activo",
+  "__v": 0
+}]
