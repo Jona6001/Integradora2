@@ -1,93 +1,260 @@
-/* Variables del tema claro */
+/* Variables del tema claro - DISEÑO AMADERADO */
 :root {
-  --primary: #D2691E;
-  --secondary: #8B4513;
-  --accent: #FF6B35;
-  --bg-primary: #F8F9FA;
-  --bg-secondary: #FFFFFF;
-  --text-primary: #2D3748;
-  --text-secondary: #4A5568;
-  --text-muted: #718096;
-  --border: #E2E8F0;
-  --shadow: rgba(0, 0, 0, 0.1);
+  /* Colores principales amaderados */
+  --primary: #8B4513; /* Marrón silla de montar */
+  --secondary: #A0522D; /* Marrón siena */
+  --accent: #D2691E; /* Chocolate */
+  
+  /* Fondos amaderados */
+  --bg-primary: #FDF6E3; /* Crema cálido */
+  --bg-secondary: #FFFFFF; /* Blanco puro */
+  --bg-tertiary: #F5E6D3; /* Beige cálido */
+  
+  /* Tonos de madera */
+  --wood-light: #DEB887; /* Madera clara */
+  --wood-medium: #CD853F; /* Madera media */
+  --wood-dark: #8B4513; /* Madera oscura */
+  --wood-darker: #654321; /* Madera muy oscura */
+  
+  /* Textos */
+  --text-primary: #3E2723; /* Marrón muy oscuro */
+  --text-secondary: #5D4037; /* Marrón oscuro */
+  --text-muted: #8D6E63; /* Marrón gris */
+  --text-light: #FFFFFF; /* Blanco para contrastes */
+  
+  /* Bordes y sombras */
+  --border: #D7CCC8; /* Beige claro */
+  --border-dark: #A1887F; /* Beige oscuro */
+  --shadow: rgba(139, 69, 19, 0.15); /* Sombra marrón suave */
+  --shadow-strong: rgba(139, 69, 19, 0.3); /* Sombra marrón fuerte */
+  
+  /* Gradientes amaderados */
   --gradient-start: #D2691E;
   --gradient-end: #8B4513;
+  --gradient-wood: linear-gradient(135deg, #DEB887 0%, #CD853F 50%, #8B4513 100%);
 }
 
-/* Variables del tema oscuro */
+/* Variables del tema oscuro - DISEÑO AMADERADO NOCTURNO */
 [data-theme="dark"] {
-  --primary: #FF8C42;
-  --secondary: #D2691E;
-  --accent: #FF6B35;
-  --bg-primary: #1A202C;
-  --bg-secondary: #2D3748;
-  --text-primary: #F7FAFC;
-  --text-secondary: #E2E8F0;
-  --text-muted: #A0AEC0;
-  --border: #4A5568;
-  --shadow: rgba(0, 0, 0, 0.3);
-  --gradient-start: #FF8C42;
-  --gradient-end: #D2691E;
+  /* Colores principales */
+  --primary: #D2691E; /* Chocolate más claro */
+  --secondary: #CD853F; /* Madera dorada */
+  --accent: #F4A460; /* Arena marrón */
+  
+  /* Fondos oscuros con calidez */
+  --bg-primary: #1C1611; /* Negro cálido */
+  --bg-secondary: #2C2317; /* Marrón muy oscuro */
+  --bg-tertiary: #3C2F1D; /* Marrón oscuro */
+  
+  /* Tonos de madera oscura */
+  --wood-light: #8D6E63; /* Madera oscura clara */
+  --wood-medium: #6D4C41; /* Madera oscura media */
+  --wood-dark: #4E342E; /* Madera muy oscura */
+  --wood-darker: #3E2723; /* Madera casi negra */
+  
+  /* Textos para tema oscuro */
+  --text-primary: #EFEBE9; /* Beige muy claro */
+  --text-secondary: #D7CCC8; /* Beige claro */
+  --text-muted: #A1887F; /* Beige medio */
+  --text-light: #FFFFFF; /* Blanco puro */
+  
+  /* Bordes y sombras oscuras */
+  --border: #4E342E; /* Marrón oscuro */
+  --border-dark: #3E2723; /* Marrón muy oscuro */
+  --shadow: rgba(0, 0, 0, 0.4); /* Sombra negra */
+  --shadow-strong: rgba(0, 0, 0, 0.6); /* Sombra negra fuerte */
+  
+  /* Gradientes oscuros */
+  --gradient-start: #D2691E;
+  --gradient-end: #8B4513;
+  --gradient-wood: linear-gradient(135deg, #6D4C41 0%, #4E342E 50%, #3E2723 100%);
 }
 
 /* Transiciones suaves para el cambio de tema */
 * {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Clases utilitarias para temas */
-.bg-theme-primary {
-  background-color: var(--bg-primary);
+/* Clases utilitarias para el diseño amaderado */
+.bg-wood-light {
+  background-color: var(--wood-light);
 }
 
-.bg-theme-secondary {
-  background-color: var(--bg-secondary);
+.bg-wood-medium {
+  background-color: var(--wood-medium);
 }
 
-.text-theme-primary {
+.bg-wood-dark {
+  background-color: var(--wood-dark);
+}
+
+.bg-wood-gradient {
+  background: var(--gradient-wood);
+}
+
+.text-wood-primary {
   color: var(--text-primary);
 }
 
-.text-theme-secondary {
+.text-wood-secondary {
   color: var(--text-secondary);
 }
 
-.text-theme-muted {
-  color: var(--text-muted);
-}
-
-.border-theme {
+.border-wood {
   border-color: var(--border);
 }
 
-.bg-gradient-theme {
-  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+.shadow-wood {
+  box-shadow: 0 4px 6px -1px var(--shadow), 0 2px 4px -1px var(--shadow);
 }
 
-/* Estilos específicos para el tema oscuro */
-[data-theme="dark"] .shadow-lg {
-  box-shadow: 0 10px 25px -3px var(--shadow), 0 4px 6px -2px var(--shadow);
+.shadow-wood-lg {
+  box-shadow: 0 10px 15px -3px var(--shadow), 0 4px 6px -2px var(--shadow);
 }
 
-[data-theme="dark"] .backdrop-blur-sm {
-  background-color: rgba(45, 55, 72, 0.8);
+.shadow-wood-xl {
+  box-shadow: 0 20px 25px -5px var(--shadow-strong), 0 10px 10px -5px var(--shadow);
 }
 
-[data-theme="dark"] .bg-white\/10 {
-  background-color: rgba(255, 255, 255, 0.1);
+/* Efectos de textura de madera */
+.wood-texture {
+  background-image: 
+    linear-gradient(45deg, rgba(139, 69, 19, 0.05) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(139, 69, 19, 0.05) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(139, 69, 19, 0.05) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(139, 69, 19, 0.05) 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
 }
 
-[data-theme="dark"] .bg-white\/95 {
-  background-color: rgba(45, 55, 72, 0.95);
+.wood-grain {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(139, 69, 19, 0.03) 0px,
+    rgba(139, 69, 19, 0.03) 1px,
+    transparent 1px,
+    transparent 4px
+  );
 }
 
-/* Animaciones mejoradas */
-@keyframes theme-transition {
-  0% { opacity: 0.8; }
-  50% { opacity: 0.9; }
-  100% { opacity: 1; }
+/* Botones estilo amaderado */
+.btn-wood {
+  background: var(--gradient-wood);
+  color: var(--text-light);
+  border: 1px solid var(--border-dark);
+  box-shadow: var(--shadow-wood);
+  transition: all 0.3s ease;
 }
 
-[data-theme="dark"] * {
-  animation: theme-transition 0.3s ease-in-out;
+.btn-wood:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-wood-lg);
+  filter: brightness(1.1);
+}
+
+/* Cards estilo amaderado */
+.card-wood {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-wood);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.card-wood:hover {
+  box-shadow: var(--shadow-wood-lg);
+  transform: translateY(-4px);
+}
+
+/* Navbar estilo amaderado */
+.navbar-wood {
+  background: var(--gradient-wood);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-dark);
+  box-shadow: var(--shadow-wood);
+}
+
+/* Modal estilo amaderado */
+.modal-wood {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-wood-xl);
+  border-radius: 20px;
+}
+
+/* Inputs estilo amaderado */
+.input-wood {
+  background: var(--bg-primary);
+  border: 2px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.input-wood:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+  outline: none;
+}
+
+/* Animaciones amaderadas */
+@keyframes wood-glow {
+  0%, 100% { box-shadow: var(--shadow-wood); }
+  50% { box-shadow: var(--shadow-wood-lg); }
+}
+
+.animate-wood-glow {
+  animation: wood-glow 2s ease-in-out infinite;
+}
+
+@keyframes wood-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-wood-float {
+  animation: wood-float 4s ease-in-out infinite;
+}
+
+/* Responsive y tema específicos */
+[data-theme="dark"] .card-wood {
+  background: var(--bg-secondary);
+  border-color: var(--border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .navbar-wood {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .input-wood {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .input-wood:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(210, 105, 30, 0.2);
+}
+
+/* Scrollbar amaderado */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gradient-wood);
+  border-radius: 6px;
+  border: 2px solid var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--wood-medium) 0%, var(--wood-dark) 100%);
 }

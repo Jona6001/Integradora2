@@ -26,17 +26,20 @@ export const getProductById = async (req: Request, res: Response): Promise<void>
     }
 };
 
+
+
 // Crear producto
 export const createProduct = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { _id, nombre, precio, tipo, status } = req.body;
+        const { _id, nombre, precio, tipo, status, imagen } = req.body; // <-- agrega imagen aquí
         const newProduct = new Product({
             _id,
             nombre,
             precio,
             tipo,
             status: status || "activo",
-            creadoEn: new Date()
+            creadoEn: new Date(),
+            imagen // <-- agrega imagen aquí
         });
         const product = await newProduct.save();
         res.status(201).json({ message: "Producto creado exitosamente", product });
@@ -49,12 +52,13 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
 export const updateProduct = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-        const { nombre, precio, tipo, status } = req.body;
+        const { nombre, precio, tipo, status, imagen } = req.body; // <-- agrega imagen aquí
         const updateData: any = {};
         if (nombre) updateData.nombre = nombre;
         if (precio) updateData.precio = precio;
         if (tipo) updateData.tipo = tipo;
         if (status) updateData.status = status;
+        if (imagen !== undefined) updateData.imagen = imagen; // <-- agrega imagen aquí
 
         const product = await Product.findByIdAndUpdate(id, updateData, { new: true });
         if (!product) {
@@ -66,6 +70,7 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
         res.status(500).json({ message: "Error al actualizar producto", error });
     }
 };
+
 
 // Eliminar (dar de baja) producto
 export const deleteProduct = async (req: Request, res: Response): Promise<void> => {

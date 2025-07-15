@@ -1,4 +1,15 @@
-const API_BASE_URL = 'http://localhost:6001';
+// Detectar si estamos en desarrollo local o móvil
+const getApiBaseUrl = () => {
+  // En desarrollo, detectar si es localhost o IP
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:6001';
+  } else {
+    // 👈 CAMBIA ESTA IP POR LA TUYA (ejecuta 'ipconfig' para obtenerla)
+    return 'http://192.168.1.74:6001'; // Ejemplo: 'http://192.168.1.100:6001'
+  }
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export const API_ENDPOINTS = {
   // Usuarios

@@ -1,5 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import RegisterPage from "./RegisterPage";
+import chems from "../assets/website/logo.jpeg";
+import { FaUser, FaLock, FaEnvelope, FaEye, FaEyeSlash,  FaSignInAlt, FaKey, FaArrowLeft } from "react-icons/fa";
+import { MdOutlinePassword } from "react-icons/md";
+ import PropTypes from "prop-types";
 
 export default function LoginPage({ onLogin }) {
   const [form, setForm] = useState({ usuario: "", password: "" });
@@ -17,6 +21,9 @@ export default function LoginPage({ onLogin }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changePasswordError, setChangePasswordError] = useState("");
   const [changePasswordLoading, setChangePasswordLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -29,6 +36,11 @@ export default function LoginPage({ onLogin }) {
       setError("Por favor, completa todos los campos.");
       return;
     }
+  
+    
+    LoginPage.propTypes = {
+      onLogin: PropTypes.func,
+    };
     setLoading(true);
     try {
       const res = await fetch("http://localhost:6001/int/user/login", {
@@ -45,30 +57,27 @@ export default function LoginPage({ onLogin }) {
         setLoading(false);
         return;
       }
-      
+
       // 🔍 VERIFICAR SI EL USUARIO TIENE CONTRASEÑA TEMPORAL
       if (data.user.hasTemporaryPassword) {
-        console.log('⚠️ Contraseña temporal detectada, mostrando pantalla de cambio');
         setTempPasswordUser(data.user);
         setShowChangePassword(true);
         setLoading(false);
-        
-        // 👇 MOSTRAR ALERTA INMEDIATA
         alert('⚠️ ATENCIÓN: Debes cambiar tu contraseña temporal antes de continuar por motivos de seguridad.');
         return;
       }
-      
+
       // Login normal si no hay contraseña temporal
       localStorage.setItem("auth", "true");
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("user", JSON.stringify(data.user));
-      
+
       if (onLogin) {
         onLogin(data.user, data.accessToken);
       } else {
         window.location.reload();
       }
-      
+
     } catch (err) {
       setError("Error de conexión con el servidor.");
       setLoading(false);
@@ -78,12 +87,12 @@ export default function LoginPage({ onLogin }) {
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     setForgotPasswordMessage("");
-    
+
     if (cooldown > 0) {
       setForgotPasswordMessage(`⏱️ Espera ${cooldown} segundos antes de enviar otro correo.`);
       return;
     }
-    
+
     if (!forgotPasswordEmail) {
       setForgotPasswordMessage("Por favor, ingresa tu correo electrónico.");
       return;
@@ -97,29 +106,26 @@ export default function LoginPage({ onLogin }) {
     }
 
     setForgotPasswordLoading(true);
-    
+
     try {
       const res = await fetch("http://localhost:6001/int/user/recover-pass", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotPasswordEmail }),
       });
-      
+
       const data = await res.json();
-      
+
       if (res.ok) {
-        // ✅ SOLO activar cooldown cuando el correo se envía exitosamente
         setForgotPasswordMessage("✅ Se ha enviado un correo con las instrucciones para recuperar tu contraseña.");
-        startCooldown(); // 👈 SOLO se ejecuta cuando el envío es exitoso
+        startCooldown();
       } else {
-        // ❌ NO activar cooldown si hay error
         setForgotPasswordMessage(data.message || "Error al enviar el correo de recuperación.");
       }
     } catch (err) {
-      // ❌ NO activar cooldown si hay error de conexión
       setForgotPasswordMessage("Error de conexión con el servidor.");
     }
-    
+
     setForgotPasswordLoading(false);
   };
 
@@ -139,24 +145,24 @@ export default function LoginPage({ onLogin }) {
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setChangePasswordError("");
-    
+
     if (!newPassword || !confirmPassword) {
       setChangePasswordError("Por favor, completa todos los campos.");
       return;
     }
-    
+
     if (newPassword.length < 6) {
       setChangePasswordError("La contraseña debe tener al menos 6 caracteres.");
       return;
     }
-    
+
     if (newPassword !== confirmPassword) {
       setChangePasswordError("Las contraseñas no coinciden.");
       return;
     }
-    
+
     setChangePasswordLoading(true);
-    
+
     try {
       const res = await fetch("http://localhost:6001/int/user/change-temp-password", {
         method: "POST",
@@ -166,17 +172,16 @@ export default function LoginPage({ onLogin }) {
           newPassword: newPassword
         }),
       });
-      
+
       const data = await res.json();
-      
+
       if (res.ok) {
-        // Login exitoso después del cambio de contraseña
         localStorage.setItem("auth", "true");
         localStorage.setItem("accessToken", data.accessToken);
         localStorage.setItem("user", JSON.stringify(data.user));
-        
+
         alert("🎉 Contraseña cambiada exitosamente. Bienvenido!");
-        
+
         if (onLogin) {
           onLogin(data.user, data.accessToken);
         } else {
@@ -188,10 +193,11 @@ export default function LoginPage({ onLogin }) {
     } catch (err) {
       setChangePasswordError("Error de conexión con el servidor.");
     }
-    
+
     setChangePasswordLoading(false);
   };
 
+  // --- VISTAS ---
   if (showRegister) {
     return <RegisterPage onBack={() => setShowRegister(false)} />;
   }
@@ -201,9 +207,9 @@ export default function LoginPage({ onLogin }) {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-secondary">
         <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
           <div className="text-center mb-6">
-            <div className="text-6xl mb-4">🔐</div>
-            <h2 className="text-3xl font-bold text-primary font-cursive">
-              Cambiar Contraseña
+            <div className="text-6xl mb-4 text-yellow-500 flex justify-center"><MdOutlinePassword /></div>
+            <h2 className="text-3xl font-bold text-primary font-cursive flex items-center justify-center gap-2">
+              <FaKey className="inline mb-1" /> Cambiar Contraseña
             </h2>
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
               <div className="flex items-start space-x-2">
@@ -218,33 +224,55 @@ export default function LoginPage({ onLogin }) {
 
           <form onSubmit={handleChangePassword} className="space-y-5">
             <div>
-              <label className="block mb-1 text-gray-700 font-semibold">
-                🔒 Nueva Contraseña
+              <label className="block mb-1 text-gray-700 font-semibold flex items-center gap-2">
+                <FaLock /> Nueva Contraseña
               </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-                placeholder="Ingresa tu nueva contraseña"
-                autoFocus
-                disabled={changePasswordLoading}
-              />
+              <div className="relative">
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
+                  placeholder="Ingresa tu nueva contraseña"
+                  autoFocus
+                  disabled={changePasswordLoading}
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  tabIndex={-1}
+                  onClick={() => setShowNewPassword((v) => !v)}
+                  aria-label="Mostrar/Ocultar contraseña"
+                >
+                  {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
               <p className="text-xs text-gray-500 mt-1">Mínimo 6 caracteres</p>
             </div>
 
             <div>
-              <label className="block mb-1 text-gray-700 font-semibold">
-                🔒 Confirmar Contraseña
+              <label className="block mb-1 text-gray-700 font-semibold flex items-center gap-2">
+                <FaLock /> Confirmar Contraseña
               </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-                placeholder="Confirma tu nueva contraseña"
-                disabled={changePasswordLoading}
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
+                  placeholder="Confirma tu nueva contraseña"
+                  disabled={changePasswordLoading}
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  tabIndex={-1}
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  aria-label="Mostrar/Ocultar contraseña"
+                >
+                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
             </div>
 
             {changePasswordError && (
@@ -255,7 +283,7 @@ export default function LoginPage({ onLogin }) {
 
             <button
               type="submit"
-              className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition flex items-center justify-center"
+              className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition flex items-center justify-center gap-2"
               disabled={changePasswordLoading}
             >
               {changePasswordLoading ? (
@@ -265,7 +293,7 @@ export default function LoginPage({ onLogin }) {
                 </>
               ) : (
                 <>
-                  🔄 Cambiar Contraseña
+                  <FaKey /> Cambiar Contraseña
                 </>
               )}
             </button>
@@ -286,9 +314,9 @@ export default function LoginPage({ onLogin }) {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-secondary">
         <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
           <div className="text-center mb-6">
-            <div className="text-6xl mb-4">🔐</div>
-            <h2 className="text-3xl font-bold text-primary font-cursive">
-              Recuperar Contraseña
+            <div className="text-6xl mb-4 text-blue-500 flex justify-center"><FaEnvelope /></div>
+            <h2 className="text-3xl font-bold text-primary font-cursive flex items-center justify-center gap-2">
+              <FaKey className="inline mb-1" /> Recuperar Contraseña
             </h2>
             <p className="text-gray-600 mt-2">
               Ingresa tu correo electrónico y te enviaremos las instrucciones para recuperar tu contraseña.
@@ -297,8 +325,8 @@ export default function LoginPage({ onLogin }) {
 
           <form onSubmit={handleForgotPassword} className="space-y-5">
             <div>
-              <label className="block mb-1 text-gray-700 font-semibold">
-                📧 Correo Electrónico
+              <label className="block mb-1 text-gray-700 font-semibold flex items-center gap-2">
+                <FaEnvelope /> Correo Electrónico
               </label>
               <input
                 type="email"
@@ -325,7 +353,7 @@ export default function LoginPage({ onLogin }) {
 
             <button
               type="submit"
-              className={`w-full py-3 rounded-lg font-semibold transition flex items-center justify-center ${
+              className={`w-full py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
                 cooldown > 0 
                   ? 'bg-gray-400 text-white cursor-not-allowed' 
                   : 'bg-primary text-white hover:bg-secondary'
@@ -343,7 +371,7 @@ export default function LoginPage({ onLogin }) {
                 </>
               ) : (
                 <>
-                  📨 Enviar Correo de Recuperación
+                  <FaEnvelope /> Enviar Correo de Recuperación
                 </>
               )}
             </button>
@@ -351,7 +379,7 @@ export default function LoginPage({ onLogin }) {
             <div className="text-center space-y-2">
               <button
                 type="button"
-                className="text-primary hover:text-secondary font-semibold transition"
+                className="text-primary hover:text-secondary font-semibold transition flex items-center gap-2"
                 onClick={() => {
                   setShowForgotPassword(false);
                   setForgotPasswordEmail("");
@@ -360,7 +388,7 @@ export default function LoginPage({ onLogin }) {
                 }}
                 disabled={forgotPasswordLoading}
               >
-                ← Volver al inicio de sesión
+                <FaArrowLeft /> Volver al inicio de sesión
               </button>
             </div>
           </form>
@@ -385,21 +413,28 @@ export default function LoginPage({ onLogin }) {
     );
   }
 
+  // --- LOGIN PRINCIPAL ---
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-secondary">
       <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
         <div className="text-center mb-6">
-          <div className="text-6xl mb-4">🌮</div>
-          <h2 className="text-3xl font-bold text-primary font-cursive">
-            Lonches El Primo
+          <div className="flex justify-center mb-4">
+            <div className="w-50 h-40 rounded-full overflow-hidden flex items-center justify-center bg-white shadow-lg mx-auto border-4 border-primary">
+              <img src={chems} alt="Logo Lonches El Primo" className="object-cover w-full h-full" />
+            </div>
+          </div>
+          <h2 className="text-3xl font-bold text-primary font-cursive flex items-center justify-center gap-2">
+             El Primo Lonches
           </h2>
-          <p className="text-gray-600 mt-2">Inicia sesión en tu cuenta</p>
+          <p className="text-gray-600 mt-2 flex items-center justify-center gap-2">
+            <FaSignInAlt /> Inicia sesión en tu cuenta
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block mb-1 text-gray-700 font-semibold">
-              👤 Usuario
+            <label className="block mb-1 text-gray-700 font-semibold flex items-center gap-2">
+              <FaUser /> Usuario
             </label>
             <input
               type="text"
@@ -412,31 +447,43 @@ export default function LoginPage({ onLogin }) {
               disabled={loading}
             />
           </div>
-          
+
           <div>
-            <label className="block mb-1 text-gray-700 font-semibold">
-              🔒 Contraseña
+            <label className="block mb-1 text-gray-700 font-semibold flex items-center gap-2">
+              <FaLock /> Contraseña
             </label>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-              placeholder="Tu contraseña"
-              disabled={loading}
-            />
+           <div className="relative">
+  <input
+    type={showPassword ? "text" : "password"}
+    name="password"
+    value={form.password}
+    onChange={handleChange}
+    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
+    placeholder="Tu contraseña"
+    disabled={loading}
+  />
+<button
+  type="button"
+  className="btn-password-toggle absolute right-3 top-2 -translate-y-1.3 focus:outline-none"
+  tabIndex={-1}
+  onClick={() => setShowPassword((v) => !v)}
+  aria-label="Mostrar/Ocultar contraseña"
+>
+  {showPassword ? <FaEyeSlash /> : <FaEye />}
+</button>
+
+      </div>
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm border border-red-200">
-              ⚠️ {error}
+            <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm border border-red-200 flex items-center gap-2">
+              <MdOutlinePassword className="text-xl" /> {error}
             </div>
           )}
 
           <button
             type="submit"
-            className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition flex items-center justify-center"
+            className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition flex items-center justify-center gap-2"
             disabled={loading}
           >
             {loading ? (
@@ -446,7 +493,7 @@ export default function LoginPage({ onLogin }) {
               </>
             ) : (
               <>
-                🚀 Iniciar sesión
+                <FaSignInAlt /> Iniciar sesión
               </>
             )}
           </button>
@@ -454,23 +501,13 @@ export default function LoginPage({ onLogin }) {
           <div className="text-center space-y-2">
             <button
               type="button"
-              className="text-primary hover:text-secondary font-semibold transition text-sm"
+              className="text-primary hover:text-secondary font-semibold transition text-sm flex items-center gap-2 mx-auto"
               onClick={() => setShowForgotPassword(true)}
               disabled={loading}
             >
-              🔑 ¿Olvidaste tu contraseña?
+              <FaKey /> ¿Olvidaste tu contraseña?
             </button>
-            
-            <div className="border-t pt-4">
-              <button
-                type="button"
-                className="w-full bg-gray-100 text-primary py-3 rounded-lg font-semibold hover:bg-gray-200 transition"
-                onClick={() => setShowRegister(true)}
-                disabled={loading}
-              >
-                👨‍💼 Crear nueva cuenta
-              </button>
-            </div>
+
           </div>
         </form>
       </div>

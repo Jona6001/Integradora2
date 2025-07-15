@@ -8,15 +8,17 @@ import productRoutes from './routes/product.routes';
 import stockRoutes from './routes/stock.routes';
 import sellsRoutes from './routes/sell.routes';
 
-
 const app = express();
-const PORT = process.env.PORT || 6001;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 6001;
 
 // Conectar a la base de datos
 connectDB();
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: '*', // 👈 Permitir cualquier origen para desarrollo
+  credentials: true
+}));
 app.use(express.json());
 
 // Rutas
@@ -30,6 +32,8 @@ app.get('/', (req, res) => {
     res.json({ message: 'API funcionando correctamente' });
 });
 
-app.listen(PORT, () => {
-    console.log(` Servidor corriendo en puerto ${PORT}`);
+// 👈 Hacer que el servidor escuche en todas las interfaces
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+    console.log(`📱 Accesible desde: http://0.0.0.0:${PORT}`);
 });

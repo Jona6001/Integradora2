@@ -1,13 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 @import './styles/themes.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Configuración base mejorada */
+/* Configuración base amaderada */
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.6;
   font-weight: 400;
   color-scheme: light dark;
   font-synthesis: none;
@@ -17,65 +17,191 @@
   -webkit-text-size-adjust: 100%;
 }
 
+/* Tipografías amaderadas */
+.font-wood-heading {
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.font-wood-body {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+}
+
 /* Transiciones globales suaves */
 * {
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+/* Configuración del body */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Configuración de links */
+a {
+  font-weight: 500;
+  color: var(--primary);
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: var(--secondary);
+}
+
+/* Configuración de headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', serif;
+  color: var(--text-primary);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Botones base amaderados */
+button {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
   transition: all 0.3s ease;
 }
 
-/* Scrollbar personalizada */
-::-webkit-scrollbar {
-  width: 8px;
+button:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-wood);
 }
 
-::-webkit-scrollbar-track {
-  background: var(--bg-primary);
+button:focus,
+button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
-::-webkit-scrollbar-thumb {
+/* Utilidades adicionales para glassmorphism amaderado */
+.glass-wood {
+  background: rgba(253, 246, 227, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(139, 69, 19, 0.2);
+}
+
+[data-theme="dark"] .glass-wood {
+  background: rgba(28, 22, 17, 0.8);
+  border: 1px solid rgba(210, 105, 30, 0.2);
+}
+
+/* Efectos de hover amaderados */
+.hover-wood {
+  transition: all 0.3s ease;
+}
+
+.hover-wood:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: var(--shadow-wood-lg);
+}
+
+/* Loading spinner amaderado */
+.spinner-wood {
+  border: 3px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  :root {
+    font-size: 14px;
+  }
+  
+  .glass-wood {
+    backdrop-filter: blur(8px);
+  }
+}
+
+/* Custom selection color */
+::selection {
+  background-color: var(--primary);
+  color: var(--text-light);
+}
+
+::-moz-selection {
+  background-color: var(--primary);
+  color: var(--text-light);
+}
+
+/* Focus ring amaderado */
+.focus-ring-wood:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Dividers amaderados */
+.divider-wood {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  margin: 2rem 0;
+}
+
+/* Badges amaderados */
+.badge-wood {
   background: var(--primary);
-  border-radius: 4px;
+  color: var(--text-light);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--secondary);
+/* Cards con efecto de profundidad */
+.depth-wood {
+  box-shadow: 
+    0 1px 3px rgba(139, 69, 19, 0.1),
+    0 1px 2px rgba(139, 69, 19, 0.06);
 }
 
-/* Clases utilitarias de Tailwind personalizadas */
-.font-cursive {
-  font-family: 'Playfair Display', serif;
+.depth-wood:hover {
+  box-shadow: 
+    0 10px 15px -3px rgba(139, 69, 19, 0.1),
+    0 4px 6px -2px rgba(139, 69, 19, 0.06);
 }
 
-.text-shadow {
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+.btn-password-toggle,
+.btn-password-toggle:hover,
+.btn-password-toggle:focus {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.9rem;
+  font-size: 1.1rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  box-shadow: none;
+  cursor: pointer;
+  transition: none !important;
+  transform: none !important;
 }
 
-/* Animaciones adicionales */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-@keyframes pulse-slow {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.animate-pulse-slow {
-  animation: pulse-slow 4s ease-in-out infinite;
-}
-
-/* Efectos de glassmorphism */
-.glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-[data-theme="dark"] .glass {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.btn-password-toggle:hover,
+.btn-password-toggle:focus {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--bg-secondary);
+  box-shadow: none !important;
 }

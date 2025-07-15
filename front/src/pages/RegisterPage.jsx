@@ -4,6 +4,7 @@ export default function RegisterPage({ onBack }) {
   const [form, setForm] = useState({
     nombre: "",
     apellidos: "",
+    email: "",
     role: "empleado",
     telefono: "",
     direccion: "",
@@ -25,12 +26,18 @@ export default function RegisterPage({ onBack }) {
     if (
       !form.nombre ||
       !form.apellidos ||
+      !form.email ||
       !form.telefono ||
       !form.direccion ||
       !form.password ||
       !form.confirmPassword
     ) {
       setError("Por favor, completa todos los campos.");
+      return;
+    }
+    // Validación de email simple
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setError("El correo electrónico no es válido.");
       return;
     }
     if (form.password !== form.confirmPassword) {
@@ -45,6 +52,7 @@ export default function RegisterPage({ onBack }) {
         body: JSON.stringify({
           nombre: form.nombre,
           apellidos: form.apellidos,
+          email: form.email,
           role: form.role,
           telefono: form.telefono,
           direccion: form.direccion,
@@ -61,6 +69,7 @@ export default function RegisterPage({ onBack }) {
       setForm({
         nombre: "",
         apellidos: "",
+        email: "",
         role: "empleado",
         telefono: "",
         direccion: "",
@@ -102,6 +111,17 @@ export default function RegisterPage({ onBack }) {
           />
         </div>
         <div>
+          <label className="block mb-1 text-gray-700 font-semibold">Correo electrónico</label>
+          <input
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            disabled={loading}
+          />
+        </div>
+        <div>
           <label className="block mb-1 text-gray-700 font-semibold">Teléfono</label>
           <input
             type="text"
@@ -134,7 +154,7 @@ export default function RegisterPage({ onBack }) {
           >
             <option value="empleado">Empleado</option>
             <option value="gerente">Gerente</option>
-            <option value="administrador">Administrador</option>
+            <option value="admin">Administrador</option>
           </select>
         </div>
         <div>
