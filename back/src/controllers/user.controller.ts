@@ -2,9 +2,11 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/usuarios.models';
+import { sendEmail } from '../utils/sendEmail';
 
 // Mapa para usuarios con contraseñas temporales
 const temporaryPasswordUsers = new Map<string, boolean>();
+
 
 // OBTENER TODOS LOS USUARIOS
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
@@ -35,12 +37,12 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
     }
 };
 
-// 🔥 NUEVO: OBTENER PERFIL DEL USUARIO LOGUEADO
+//  OBTENER PERFIL DEL USUARIO LOGUEADO
 export const getUserProfile = async (req: Request, res: Response): Promise<void> => {
     try {
         const authHeader = req.headers.authorization;
         
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        if (!authHeader?.startsWith('Bearer ')) {
             res.status(401).json({ message: "Token no proporcionado" });
             return;
         }
@@ -183,7 +185,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
         
         // Si la contraseña es temporal, agregar al mapa
         if (password === nombre || password === "123456" || password === "temporal") {
-            temporaryPasswordUsers.set(user._id.toString(), true);
+            temporaryPasswordUsers.set((user as { _id: any })._id.toString(), true);
         }
 
         console.log('✅ Usuario creado:', user.nombre);
@@ -261,10 +263,10 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
         // Remover de temporales si está eliminado
         temporaryPasswordUsers.delete(id);
         
-        console.log('✅ Usuario eliminado:', user.nombre);
+        console.log(' Usuario eliminado:', user.nombre);
         res.json({ message: "Usuario eliminado exitosamente", user });
     } catch (error) {
-        console.error('❌ Error al eliminar usuario:', error);
+        console.error(' Error al eliminar usuario:', error);
         res.status(500).json({ message: "Error al eliminar usuario", error });
     }
 };
@@ -282,41 +284,86 @@ export const checkTemporaryPassword = async (req: Request, res: Response): Promi
     }
 };
 
-// RESTABLECER CONTRASEÑA (para admins)
+// RECUPERAR CONTRASEÑA (ENVÍO DE CORREO CON CONTRASEÑA TEMPORAL)
+export const recoverPassword = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            res.status(400).json({ message: "El correo electrónico es requerido" });
+            return;
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            res.status(404).json({ message: "No existe un usuario con ese correo electrónico" });
+            return;
+        }
+
+        // Generar contraseña temporal
+        const tempPassword = Math.random().toString(36).slice(-8);
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+        user.password = hashedPassword;
+        await user.save();
+
+        // Marcar como contraseña temporal
+        temporaryPasswordUsers.set((user as { _id: any })._id.toString(), true);
+
+        // Enviar correo con la contraseña temporal
+        await sendEmail(
+            user.email,
+            "Recuperación de contraseña - Lonches El Primo",
+            `Hola ${user.nombre},\n\nTu nueva contraseña temporal es: ${tempPassword}\n\nPor seguridad, cámbiala al iniciar sesión.\n\nSi no solicitaste este cambio, ignora este mensaje.`
+        );
+
+        console.log(`✅ Correo de recuperación enviado a: ${user.email}`);
+        res.json({ message: "Se ha enviado un correo con la nueva contraseña temporal." });
+    } catch (error) {
+        console.error('❌ Error en recuperación de contraseña:', error);
+        res.status(500).json({ message: "Error al enviar el correo de recuperación", error });
+    }
+};
+
+// RESTABLECER CONTRASEÑA POR EMAIL (cuando el usuario ya tiene la temporal)
 export const resetPassword = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { id } = req.params;
-        const { newPassword } = req.body;
+        const { email, newPassword } = req.body;
 
-        if (!newPassword || newPassword.length < 6) {
-            res.status(400).json({ message: "La nueva contraseña debe tener al menos 6 caracteres" });
+        if (!email || !newPassword || newPassword.length < 6) {
+            res.status(400).json({ message: "Email y nueva contraseña (mínimo 6 caracteres) son requeridos" });
+            return;
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            res.status(404).json({ message: "Usuario no encontrado con ese correo" });
             return;
         }
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        
-        const user = await User.findByIdAndUpdate(
-            id,
-            { password: hashedPassword },
-            { new: true }
-        ).select('-password');
 
-        if (!user) {
-            res.status(404).json({ message: "Usuario no encontrado" });
-            return;
-        }
+        user.password = hashedPassword;
+        await user.save();
 
         // Marcar como contraseña temporal si es genérica
         if (newPassword === user.nombre || newPassword === "123456" || newPassword === "temporal") {
-            temporaryPasswordUsers.set(id, true);
+            temporaryPasswordUsers.set((user as { _id: any })._id.toString(), true);
         } else {
-            temporaryPasswordUsers.delete(id);
+            temporaryPasswordUsers.delete((user as { _id: any })._id.toString());
         }
 
-        console.log('✅ Contraseña restablecida para:', user.nombre);
-        res.json({ message: "Contraseña restablecida exitosamente", user });
+        // Opcional: enviar correo de confirmación
+        await sendEmail(
+            user.email,
+            "Contraseña restablecida",
+            "Tu contraseña ha sido restablecida correctamente."
+        );
+
+        console.log(' Contraseña restablecida para:', user.nombre);
+        res.json({ message: "Contraseña restablecida exitosamente", user: { ...user.toObject(), password: undefined } });
     } catch (error) {
-        console.error('❌ Error al restablecer contraseña:', error);
+        console.error(' Error al restablecer contraseña:', error);
         res.status(500).json({ message: "Error al restablecer contraseña", error });
     }
 };

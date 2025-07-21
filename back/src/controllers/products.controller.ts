@@ -31,7 +31,7 @@ export const getProductById = async (req: Request, res: Response): Promise<void>
 // Crear producto
 export const createProduct = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { _id, nombre, precio, tipo, status, imagen } = req.body; // <-- agrega imagen aquí
+        const { _id, nombre, precio, tipo, status, imagen } = req.body;
         const newProduct = new Product({
             _id,
             nombre,
@@ -39,7 +39,7 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
             tipo,
             status: status || "activo",
             creadoEn: new Date(),
-            imagen // <-- agrega imagen aquí
+            imagen 
         });
         const product = await newProduct.save();
         res.status(201).json({ message: "Producto creado exitosamente", product });
@@ -52,13 +52,13 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
 export const updateProduct = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-        const { nombre, precio, tipo, status, imagen } = req.body; // <-- agrega imagen aquí
+        const { nombre, precio, tipo, status, imagen } = req.body; 
         const updateData: any = {};
         if (nombre) updateData.nombre = nombre;
         if (precio) updateData.precio = precio;
         if (tipo) updateData.tipo = tipo;
         if (status) updateData.status = status;
-        if (imagen !== undefined) updateData.imagen = imagen; // <-- agrega imagen aquí
+        if (imagen !== undefined) updateData.imagen = imagen; 
 
         const product = await Product.findByIdAndUpdate(id, updateData, { new: true });
         if (!product) {

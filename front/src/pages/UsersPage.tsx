@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { FaPlus } from "react-icons/fa"; 
+
 
 interface User {
   _id: string;
@@ -367,17 +369,6 @@ export default function UsersPage({ setCurrentPage }: UsersPageProps) {
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => setCurrentPage('dashboard')}
-            className={`inline-flex items-center gap-2 font-semibold transition-colors mb-4 ${
-              theme === 'dark' 
-                ? 'text-primary hover:text-orange-400' 
-                : 'text-primary hover:text-secondary'
-            }`}
-          >
-            <span className="text-lg">←</span>
-            {t.backToDashboard}
-          </button>
           
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -393,15 +384,18 @@ export default function UsersPage({ setCurrentPage }: UsersPageProps) {
               </p>
             </div>
             
-            {(currentUser.role === 'admin' || currentUser.role === 'gerente') && (
-              <button
-                onClick={handleCreateUser}
-                className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-secondary transition-colors flex items-center gap-2"
-              >
-                <span className="text-lg">➕</span>
-                {t.createUser}
-              </button>
-            )}
+          {(currentUser.role === 'admin' || currentUser.role === 'gerente') && (
+            <button
+              onClick={handleCreateUser}
+              className={`flex items-center gap-2 ${
+                theme === "dark"
+                  ? "bg-amber-700 text-white hover:bg-amber-800"
+                  : "bg-primary text-white hover:bg-secondary"
+              } px-6 py-3 rounded-full font-semibold transition-all duration-300 shadow-lg`}
+            >
+              <FaPlus /> {t.createUser}
+            </button>
+          )}
           </div>
         </div>
 

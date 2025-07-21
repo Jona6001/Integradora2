@@ -8,6 +8,7 @@ import {
     updateUser,
     deleteUser,
     checkTemporaryPassword,
+    recoverPassword, // <--- Importa el nuevo controlador
     resetPassword
 } from '../controllers/user.controller';
 
@@ -24,6 +25,7 @@ router.post('/save', createUser);
 router.patch('/update/:id', updateUser);
 router.delete('/delete/:id', deleteUser);
 router.get('/check-temp/:userId', checkTemporaryPassword);
-router.patch('/reset-password/:id', resetPassword);
+router.post('/recover-pass', recoverPassword);
+router.post('/reset-password', resetPassword);
 
 export default router;

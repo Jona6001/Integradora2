@@ -5,6 +5,7 @@ type Product = {
   _id: string;
   nombre: string;
   precio: number;
+  imagen?: string;
 };
 
 type CartItem = {
@@ -13,12 +14,48 @@ type CartItem = {
   cantidad: number;
   precio_unitario: number;
   subtotal: number;
+  extraIngredients?: ExtraIngredient[]; 
+  imagen?: string;
 };
+
+type ExtraIngredient = {
+  name: string;
+  price: number;
+  icon: string;
+  quantity: number;
+};
+
+const TORTA_NAMES = [
+  "Torta de Adobada SENCILLA", "Torta de Adobada MIXTO", "Torta de Adobada TRIPLE",
+  "Torta de Asada SENCILLA", "Torta de Asada MIXTO", "Torta de Asada TRIPLE",
+  "Torta de Pierna SENCILLA", "Torta de Pierna MIXTO", "Torta de Pierna TRIPLE",
+  "Torta de Jamón SENCILLA", "Torta de Jamón MIXTO", "Torta de Jamón TRIPLE"
+];
+
+// Helper function to check if a product is a torta
+const isTorta = (nombre: string) => TORTA_NAMES.includes(nombre);
+
+const EXTRA_INGREDIENTS: ExtraIngredient[] = [
+  { name: "Queso", price: 5, icon: "🧀", quantity: 0 },
+  { name: "Jamón", price: 5, icon: "🥓", quantity: 0 },
+  { name: "Aguacate", price: 5, icon: "🥑", quantity: 0 },
+  { name: "Queso de Puerco", price: 5, icon: "🧀", quantity: 0 },
+  { name: "Mortadela", price: 5, icon: "🥩", quantity: 0 },
+  { name: "Queso Amarillo", price: 5, icon: "🧀", quantity: 0 },
+  { name: "Asada", price: 5, icon: "🥩", quantity: 0 },
+  { name: "Pierna", price: 5, icon: "🍗", quantity: 0 },
+  { name: "Adobada", price: 5, icon: "🌶️", quantity: 0 },
+  { name: "Cebolla", price: 5, icon: "🧅", quantity: 0 },
+  { name: "Tomate", price: 5, icon: "🍅", quantity: 0 },
+  { name: "Chile", price: 5, icon: "🌶️", quantity: 0 }
+];
 
 export default function DashboardPage({ user, setCurrentPage }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [stock, setStock] = useState<any[]>([]);
   const [sells, setSells] = useState<any[]>([]);
+  const [ingredients, setIngredients] = useState<any[]>([]);
+  const [selectedIngredients, setSelectedIngredients] = useState<{[productId: string]: string[]}>({});
   const [todayStats, setTodayStats] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -33,6 +70,7 @@ export default function DashboardPage({ user, setCurrentPage }) {
   const [showSaleModal, setShowSaleModal] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [vendedorId] = useState(1);
+  
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'light';
@@ -115,7 +153,28 @@ export default function DashboardPage({ user, setCurrentPage }) {
     const recentSales = salesList.filter(sale => 
       new Date(sale.fecha) >= fiveDaysAgo
     );
-    
+    // Contar ventas por producto en los últimos 5 días
+    recentSales.forEach(sale => {
+      if (sale.productos) {
+      sale.productos.forEach(producto => {
+        const productName = producto.nombre;
+        // Buscar la imagen del producto en la lista de productos
+        const productInfo = products.find(p => p.nombre === productName);
+        if (productSales[productName]) {
+        productSales[productName].totalSold += producto.cantidad;
+        productSales[productName].totalRevenue += producto.subtotal;
+        } else {
+        productSales[productName] = {
+          nombre: productName,
+          totalSold: producto.cantidad,
+          totalRevenue: producto.subtotal,
+          precio: producto.precio_unitario,
+          imagen: productInfo?.imagen // Agrega la imagen si existe
+        };
+        }
+      });
+      }
+    });
     // Contar ventas por producto en los últimos 5 días
     recentSales.forEach(sale => {
       if (sale.productos) {
@@ -217,28 +276,153 @@ export default function DashboardPage({ user, setCurrentPage }) {
   const t = texts[language] || texts.es;
 
   // Funciones del carrito
-  const addToCart = (productId: string) => {
-    const product = products.find(p => p._id === productId);
-    if (!product) return;
+const addToCart = (productId: string, extraIngredients: ExtraIngredient[] = []) => {
+  const product = products.find(p => p._id === productId);
+  if (!product) return;
 
-    const existingItem = cart.find(item => item.producto_id === productId);
-    
-    if (existingItem) {
-      setCart(cart.map(item => 
-        item.producto_id === productId 
-          ? { ...item, cantidad: item.cantidad + 1, subtotal: (item.cantidad + 1) * item.precio_unitario }
-          : item
-      ));
+  // Solo fusiona si el producto y los ingredientes extra son iguales
+  const existingItem = cart.find(item =>
+    item.producto_id === product._id &&
+    JSON.stringify(item.extraIngredients || []) === JSON.stringify(extraIngredients || [])
+  );
+
+  const isTortaProduct = isTorta(product.nombre);
+
+  if (existingItem) {
+    const newQuantity = existingItem.cantidad + 1;
+    setCart(cart.map(item =>
+      item.producto_id === product._id &&
+      JSON.stringify(item.extraIngredients || []) === JSON.stringify(extraIngredients || [])
+        ? {
+            ...item,
+            cantidad: newQuantity,
+            subtotal: (newQuantity * item.precio_unitario) +
+              ((item.extraIngredients as ExtraIngredient[] | undefined)?.reduce((sum, extra) => sum + (extra.price * extra.quantity * newQuantity), 0) || 0)
+          }
+        : item
+    ));
+  } else {
+    setCart([...cart, {
+      producto_id: product._id,
+      nombre: product.nombre,
+      cantidad: 1,
+      precio_unitario: product.precio,
+      subtotal: product.precio +
+        ((extraIngredients as ExtraIngredient[]).reduce((sum, extra) => sum + (extra.price * extra.quantity), 0) || 0),
+      imagen: product.imagen,
+      extraIngredients: isTortaProduct ? extraIngredients : []
+    }]);
+  }
+};
+
+   const addExtraIngredient = (productId, ingredient) => {
+  setCart(prevCart => {
+    // Busca el item original
+    const item = prevCart.find(i => i.producto_id === productId);
+    if (!item) return prevCart;
+
+    // Crea el nuevo array de ingredientes extra
+    let updatedExtras;
+    const existingExtra = item.extraIngredients?.find(extra => extra.name === ingredient.name);
+    if (existingExtra) {
+      updatedExtras = (item.extraIngredients ?? []).map(extra =>
+        extra.name === ingredient.name
+          ? { ...extra, quantity: extra.quantity + 1 }
+          : extra
+      );
     } else {
-      setCart([...cart, {
-        producto_id: product._id,
-        nombre: product.nombre,
-        cantidad: 1,
-        precio_unitario: product.precio,
-        subtotal: product.precio
-      }]);
+      updatedExtras = [...(item.extraIngredients || []), { ...ingredient, quantity: 1 }];
     }
-  };
+
+    // Si ya existe una torta con esa combinación de ingredientes, suma cantidad
+    const alreadyExists = prevCart.find(i =>
+      i.producto_id === item.producto_id &&
+      JSON.stringify(i.extraIngredients || []) === JSON.stringify(updatedExtras)
+    );
+    if (alreadyExists) {
+      return prevCart.map(i =>
+        i.producto_id === item.producto_id &&
+        JSON.stringify(i.extraIngredients || []) === JSON.stringify(updatedExtras)
+          ? { ...i, cantidad: i.cantidad + 1, subtotal: ((i.cantidad + 1) * i.precio_unitario) + updatedExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity * (i.cantidad + 1)), 0) }
+          : i
+      ).filter(i =>
+        !(i.producto_id === item.producto_id &&
+          JSON.stringify(i.extraIngredients || []) === JSON.stringify(item.extraIngredients || []) &&
+          i.cantidad === 1)
+      );
+    } else {
+      // Quita una unidad del item original y agrega el nuevo item con los ingredientes extra
+      const newCart = prevCart.map(i =>
+        i.producto_id === item.producto_id &&
+        JSON.stringify(i.extraIngredients || []) === JSON.stringify(item.extraIngredients || [])
+          ? { ...i, cantidad: i.cantidad - 1, subtotal: ((i.cantidad - 1) * i.precio_unitario) + (i.extraIngredients ?? []).reduce((sum, extra) => sum + (extra.price * extra.quantity * (i.cantidad - 1)), 0) }
+          : i
+      ).filter(i => i.cantidad > 0);
+
+      return [
+        ...newCart,
+        {
+          ...item,
+          cantidad: 1,
+          extraIngredients: updatedExtras,
+          subtotal: item.precio_unitario + updatedExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity), 0)
+        }
+      ];
+    }
+  });
+};
+  
+const removeExtraIngredient = (productId, ingredientName) => {
+  setCart(prevCart => {
+    const item = prevCart.find(i => i.producto_id === productId);
+    if (!item) return prevCart;
+
+    // Quita el ingrediente
+    const updatedExtras = (item.extraIngredients ?? [])
+      .map(extra =>
+        extra.name === ingredientName
+          ? { ...extra, quantity: Math.max(0, extra.quantity - 1) }
+          : extra
+      )
+      .filter(extra => extra.quantity > 0);
+
+    // Si ya existe una torta con esa combinación, suma cantidad
+    const alreadyExists = prevCart.find(i =>
+      i.producto_id === item.producto_id &&
+      JSON.stringify(i.extraIngredients || []) === JSON.stringify(updatedExtras)
+    );
+    if (alreadyExists) {
+      return prevCart.map(i =>
+        i.producto_id === item.producto_id &&
+        JSON.stringify(i.extraIngredients || []) === JSON.stringify(updatedExtras)
+          ? { ...i, cantidad: i.cantidad + 1, subtotal: ((i.cantidad + 1) * i.precio_unitario) + updatedExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity * (i.cantidad + 1)), 0) }
+          : i
+      ).filter(i =>
+        !(i.producto_id === item.producto_id &&
+          JSON.stringify(i.extraIngredients || []) === JSON.stringify(item.extraIngredients || []) &&
+          i.cantidad === 1)
+      );
+    } else {
+      // Quita una unidad del item original y agrega el nuevo item con los ingredientes extra
+      const newCart = prevCart.map(i =>
+        i.producto_id === item.producto_id &&
+        JSON.stringify(i.extraIngredients || []) === JSON.stringify(item.extraIngredients || [])
+          ? { ...i, cantidad: i.cantidad - 1, subtotal: ((i.cantidad - 1) * i.precio_unitario) + (i.extraIngredients ?? []).reduce((sum, extra) => sum + (extra.price * extra.quantity * (i.cantidad - 1)), 0) }
+          : i
+      ).filter(i => i.cantidad > 0);
+
+      return [
+        ...newCart,
+        {
+          ...item,
+          cantidad: 1,
+          extraIngredients: updatedExtras,
+          subtotal: item.precio_unitario + updatedExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity), 0)
+        }
+      ];
+    }
+  });
+};
 
   const updateCartQuantity = (productId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -385,7 +569,7 @@ export default function DashboardPage({ user, setCurrentPage }) {
         : 'bg-gradient-to-br from-slate-50 via-gray-100 to-slate-200'
     }`}>
       
-      {/* Header compacto - REDUCIDO */}
+      {/* Header */}
       <div className="relative">
       <div className={`${
   theme === 'dark' 
@@ -425,7 +609,7 @@ export default function DashboardPage({ user, setCurrentPage }) {
       {/* Contenido principal */}
       <div className="container mx-auto px-6 py-7">
         
-        {/* Botón principal de venta rápida - Ancho completo */}
+        {/* Botón principal de venta rápida */}
         <div className="mb-4">
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
@@ -508,7 +692,7 @@ export default function DashboardPage({ user, setCurrentPage }) {
             {topProducts.length > 0 ? (
               <div className="space-y-2">
                 {topProducts.map((product, index) => (
-                  <div key={index} className={`${
+                  <div key={product.nombre} className={`${
                     theme === 'dark' 
                       ? 'bg-slate-800/95 border-slate-600/30 text-slate-100' 
                       : 'bg-white border-slate-300 text-slate-700'
@@ -551,35 +735,53 @@ export default function DashboardPage({ user, setCurrentPage }) {
           </div>
         </div>
 
-        {/* Acciones Rápidas */}
-        <div className="mb-4">
-          <h2 className={`text-xl font-semibold mb-3 ${
-            theme === 'dark' ? 'text-slate-100' : 'text-slate-700'
-          }`}>
-            {t.quickActions}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {filteredActions.map((action, index) => (
-              <button
-                key={index}
-                onClick={action.action}
-                className="group relative"
-              >
-                <div className={`bg-gradient-to-r ${action.color} rounded-xl shadow-lg p-5 text-white transform hover:scale-105 transition-all duration-300`}>
-                  <div className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-lg border border-white/30">
-                      {action.icon}
-                    </div>
-                    <div className="text-left">
-                      <h3 className="text-base font-semibold mb-1">{action.title}</h3>
-                      <p className="text-sm opacity-80">{action.subtitle}</p>
-                    </div>
-                  </div>
-                </div>
-              </button>
-            ))}
+{/* Acciones Rápidas */}
+<div className="mb-4">
+  <h2 className={`text-2xl font-bold mb-6 text-center ${
+    theme === 'dark' ? 'text-amber-300 drop-shadow' : 'text-amber-700 drop-shadow'
+  }`}>
+    {t.quickActions}
+  </h2>
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    {filteredActions.map((action, index) => (
+      <button
+        key={index}
+        onClick={action.action}
+        className={`group relative rounded-3xl overflow-hidden transition-all duration-300 hover:scale-105 shadow-2xl
+          border-4
+          ${theme === 'dark'
+            ? 'border-[#2a170a] bg-gradient-to-br from-[#3a220e] via-[#6b3f1e] to-[#2a170a]'
+            : 'border-[#4e2e0e] bg-gradient-to-br from-[#b97a3a] via-[#8d5524] to-[#4e2e0e]'}
+        `}
+        style={{ minHeight: "140px" }}
+      >
+        <div className="flex flex-col items-center justify-center h-full p-7 gap-4">
+          <div className={`p-5 rounded-full border-2 shadow-lg flex items-center justify-center
+            ${theme === 'dark'
+              ? 'bg-amber-900/40 border-amber-700'
+              : 'bg-amber-200/60 border-amber-400'}
+          `}>
+            {action.icon}
+          </div>
+          <div className="text-center">
+            <h3 className={`text-xl font-extrabold mb-1 drop-shadow
+              ${theme === 'dark' ? 'text-amber-200' : 'text-white'}
+            `}>
+              {action.title}
+            </h3>
+            <p className={`text-base font-medium
+              ${theme === 'dark' ? 'text-amber-100 opacity-90' : 'text-amber-50 opacity-95'}
+            `}>
+              {action.subtitle}
+            </p>
           </div>
         </div>
+        {/* Glow madera más oscuro */}
+        <div className="absolute inset-0 pointer-events-none animate-wood-glow"></div>
+      </button>
+    ))}
+  </div>
+</div>
 
         {/* Estado del Stock - Compacto al final */}
         <div className="mb-4">
@@ -642,7 +844,7 @@ export default function DashboardPage({ user, setCurrentPage }) {
           </div>
         </div>
 
-        {/* Información del catálogo - Minimalista al final */}
+        {/* Información del catálogo  */}
         <div>
           <div className={`${
             theme === 'dark' 
@@ -684,160 +886,201 @@ export default function DashboardPage({ user, setCurrentPage }) {
       </div>
 
       {/* Modal de Venta Directa */}
-      {showSaleModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className={`${
-            theme === 'dark' 
-              ? 'bg-slate-800 text-slate-100' 
-              : 'bg-white text-slate-700'
-          } rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden`}>
-            <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-4">
-              <h2 className="text-xl font-bold">{t.newSale}</h2>
-            </div>
+{showSaleModal && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2">
+    <div className={`${
+      theme === 'dark' 
+        ? 'bg-slate-800 text-slate-100' 
+        : 'bg-white text-slate-700'
+    } rounded-xl shadow-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col`}>
+      <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-4">
+        <h2 className="text-xl font-bold">{t.newSale}</h2>
+      </div>
+
+      <div className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-4 max-h-[65vh] overflow-y-auto">
+
+        <div>
+          <h3 className={`font-semibold mb-3 ${
+            theme === 'dark' ? 'text-slate-100' : 'text-slate-700'
+          }`}>{t.availableProducts}</h3>
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+
+
             
-            <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto">
-              
-              {/* Productos disponibles */}
-              <div>
-                <h3 className={`font-semibold mb-4 ${
-                  theme === 'dark' ? 'text-slate-100' : 'text-slate-700'
-                }`}>{t.availableProducts}</h3>
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {products.map(product => (
-                    <div key={product._id} className={`border rounded-lg p-3 transition-colors ${
-                      theme === 'dark' 
-                        ? 'border-slate-600 hover:bg-slate-700' 
-                        : 'border-slate-300 hover:bg-slate-50'
-                    }`}>
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className={`font-medium ${
-                            theme === 'dark' ? 'text-slate-100' : 'text-slate-700'
-                          }`}>{product.nombre}</h4>
-                          <p className={`text-sm ${
-                            theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
-                          }`}>${product.precio}</p>
-                        </div>
-                        <button
-                          onClick={() => addToCart(product._id)}
-                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                        >
-                          {t.addToCart}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Carrito */}
-              <div>
-                <h3 className={`font-semibold mb-4 ${
-                  theme === 'dark' ? 'text-slate-100' : 'text-slate-700'
-                }`}>{t.cart}</h3>
-                {cart.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m0 0h8m-8 0a2 2 0 100 4 2 2 0 000-4zm8 0a2 2 0 100 4 2 2 0 000-4z" />
+            {products.map(product => (
+              <div key={product._id} className={`border rounded-lg p-2 flex gap-2 items-center transition-colors ${
+                theme === 'dark' 
+                  ? 'border-slate-600 hover:bg-slate-700' 
+                  : 'border-slate-300 hover:bg-slate-50'
+              }`}>
+                <div>
+                  {product.imagen ? (
+                    <img
+                      src={product.imagen}
+                      alt={product.nombre}
+                      className="w-10 h-10 rounded-full object-cover border"
+                    />
+                  ) : (
+                    <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                     </svg>
-                    <p>{t.emptyCart}</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {cart.map(item => (
-                      <div key={item.producto_id} className={`border rounded-lg p-3 ${
-                        theme === 'dark' 
-                          ? 'bg-slate-700 border-slate-600' 
-                          : 'bg-slate-50 border-slate-300'
-                      }`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className={`font-medium ${
-                            theme === 'dark' ? 'text-slate-100' : 'text-slate-700'
-                          }`}>{item.nombre}</h4>
-                          <button
-                            onClick={() => setCart(cart.filter(i => i.producto_id !== item.producto_id))}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => updateCartQuantity(item.producto_id, item.cantidad - 1)}
-                              className={`w-6 h-6 rounded flex items-center justify-center text-sm ${
-                                theme === 'dark' 
-                                  ? 'bg-slate-600 text-slate-100' 
-                                  : 'bg-gray-200 text-slate-700'
-                              }`}
-                            >
-                              -
-                            </button>
-                            <span className={`w-8 text-center text-sm ${
-                              theme === 'dark' ? 'text-slate-100' : 'text-slate-700'
-                            }`}>{item.cantidad}</span>
-                            <button
-                              onClick={() => updateCartQuantity(item.producto_id, item.cantidad + 1)}
-                              className={`w-6 h-6 rounded flex items-center justify-center text-sm ${
-                                theme === 'dark' 
-                                  ? 'bg-slate-600 text-slate-100' 
-                                  : 'bg-gray-200 text-slate-700'
-                              }`}
-                            >
-                              +
-                            </button>
-                          </div>
-                          <div className="text-right">
-                            <p className={`text-xs ${
-                              theme === 'dark' ? 'text-slate-300' : 'text-gray-600'
-                            }`}>${item.precio_unitario} c/u</p>
-                            <p className="font-bold text-amber-600">${item.subtotal}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    <div className="border-t pt-3">
-                      <div className="flex justify-between items-center text-lg font-bold">
-                        <span className={theme === 'dark' ? 'text-slate-100' : 'text-slate-700'}>{t.total}:</span>
-                        <span className="text-green-600">${calculateTotal()}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h4 className={`font-medium ${theme === 'dark' ? 'text-slate-100' : 'text-slate-700'}`}>{product.nombre}</h4>
+                  <p className={`text-xs ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>${product.precio}</p>
+                </div>
+                <button
+                  onClick={() => addToCart(product._id)}
+                  className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs transition-colors"
+                >
+                  {t.addToCart}
+                </button>
               </div>
-            </div>
-
-            {/* Botones de acción */}
-            <div className={`px-6 py-4 flex gap-3 ${
-              theme === 'dark' ? 'bg-slate-700' : 'bg-gray-50'
-            }`}>
-              <button
-                onClick={() => {
-                  setShowSaleModal(false);
-                  setCart([]);
-                }}
-                className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
-                  theme === 'dark' 
-                    ? 'bg-slate-600 hover:bg-slate-500 text-slate-100' 
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                }`}
-              >
-                {t.cancel}
-              </button>
-              <button
-                onClick={handleCompleteSale}
-                disabled={cart.length === 0}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {t.completeSale} (${calculateTotal()})
-              </button>
-            </div>
+            ))}
           </div>
         </div>
-      )}
+
+        <div>
+          <h3 className={`font-semibold mb-3 ${theme === 'dark' ? 'text-slate-100' : 'text-slate-700'}`}>{t.cart}</h3>
+          {cart.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">
+              <div className="text-3xl mb-2">
+                <svg className="w-10 h-10 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m0 0h8m-8 0a2 2 0 100 4 2 2 0 000-4zm8 0a2 2 0 100 4 2 2 0 000-4z" />
+                </svg>
+              </div>
+              <p>{t.emptyCart}</p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {cart.map(item => {
+                const isTorta = TORTA_NAMES.includes(item.nombre);
+                const requiredIngredients = [];
+
+                function updateCartQuantity(producto_id: string, newQuantity: number): void {
+                  if (newQuantity < 1) {
+                    setCart(cart.filter(item => item.producto_id !== producto_id));
+                    return;
+                  }
+                  setCart(cart.map(item => {
+                    if (item.producto_id === producto_id) {
+                      const extraCost = (item.extraIngredients ?? []).reduce(
+                        (sum, extra) => sum + (extra.price * extra.quantity * newQuantity),
+                        0
+                      );
+                      return {
+                        ...item,
+                        cantidad: newQuantity,
+                        subtotal: (newQuantity * item.precio_unitario) + extraCost
+                      };
+                    }
+                    return item;
+                  }));
+                }
+
+                return (
+                  <div key={item.producto_id} className="border rounded-lg p-3 flex gap-2 items-center">
+                    <div>
+                      {item.imagen ? (
+                        <img src={item.imagen} alt={item.nombre} className="w-10 h-10 rounded-full object-cover border" />
+                      ) : (
+                        <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1 mb-1">
+                        <h4 className="font-medium text-sm">{item.nombre}</h4>
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <button onClick={() => updateCartQuantity(item.producto_id, item.cantidad - 1)} className="w-5 h-5 text-xs rounded-full flex items-center justify-center font-bold transition bg-gray-200 text-gray-800 hover:bg-primary hover:text-white">-</button>
+                        <span className="w-6 text-center text-sm">{item.cantidad}</span>
+                        <button onClick={() => updateCartQuantity(item.producto_id, item.cantidad + 1)} className="w-5 h-5 text-xs rounded-full flex items-center justify-center font-bold transition bg-gray-200 text-gray-800 hover:bg-primary hover:text-white">+</button>
+                      </div>
+                      <div className="text-right text-sm">
+                        <p className="text-gray-600">${item.precio_unitario} base</p>
+                        <p className="font-bold">${item.subtotal}</p>
+                      </div>
+                      {isTorta && (
+                        <div className="border-t pt-2">
+                          <h5 className="text-xs font-semibold mb-1">🌶️ Ingredientes Extra (+$5 c/u)</h5>
+                          {item.extraIngredients && item.extraIngredients.length > 0 && (
+                            <div className="mb-1">
+                              <div className="flex flex-wrap gap-1">
+                                {item.extraIngredients.map(extra => (
+                                  <span key={extra.name} className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                                    {extra.icon} {extra.name} x{extra.quantity}
+                                    <button onClick={() => removeExtraIngredient(item.producto_id, extra.name)} className="ml-1 font-bold text-red-500 hover:text-red-700">✕</button>
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          <div className="grid grid-cols-3 gap-1">
+                            {EXTRA_INGREDIENTS.map(ingredient => (
+                              <button key={ingredient.name} onClick={() => addExtraIngredient(item.producto_id, ingredient)} className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-100 transition border border-blue-200">
+                                {ingredient.icon} {ingredient.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={() => setCart(cart.filter(i => i.producto_id !== item.producto_id))} className="ml-1 text-red-500 hover:text-red-700">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })}
+              <div className="border-t pt-2 mt-2">
+                <div className="flex justify-between items-center text-base font-bold">
+                  <span className={theme === 'dark' ? 'text-slate-100' : 'text-slate-700'}>{t.total}:</span>
+                  <span className="text-green-600">${calculateTotal()}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className={`sticky bottom-0 left-0 right-0 px-1 py-1 flex gap-2 z-40
+            ${theme === 'dark' ? 'bg-slate-800/95 border-t border-slate-500' : 'bg-white/95 border-t border-gray-200'}
+          `}>
+            <button type="button" onClick={() => { setShowSaleModal(false); setCart([]); }} className={`flex-1 py-1 rounded-md font-semibold text-xs transition-all duration-200 shadow hover:scale-105 ${
+              theme === 'dark'
+                ? 'bg-slate-600 hover:bg-slate-500 text-slate-100 border border-slate-700'
+                : 'bg-gray-200 hover:bg-gray-300 text-gray-800 border border-gray-300'
+            }`}>
+              <span className="flex items-center justify-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {t.cancel}
+              </span>
+            </button>
+
+            <button type="button" onClick={handleCompleteSale} disabled={cart.length === 0} className={`flex-1 py-1 rounded-md font-semibold text-xs transition-all duration-200 shadow hover:scale-105 ${
+              cart.length === 0
+                ? 'bg-gray-400 text-white cursor-not-allowed'
+                : theme === 'dark'
+                  ? 'bg-green-700 hover:bg-green-600 text-white border border-green-900'
+                  : 'bg-green-600 hover:bg-green-700 text-white border border-green-700'
+            }`}>
+              <span className="flex items-center justify-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                {t.completeSale} (${calculateTotal()})
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

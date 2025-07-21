@@ -1,7 +1,7 @@
-import React from "react";
 import Logo from "../../assets/website/logo.jpg";
 import { FaCoffee } from "react-icons/fa";
 import { FaUserCircle } from "react-icons/fa";
+import PropTypes from "prop-types";
 
 const Menu = [
   {
@@ -96,6 +96,11 @@ const Navbar = ({ onShowUserMenu, puedeCrearUsuario, onCrearUsuario }) => {
       </div>
     </>
   );
+};
+Navbar.propTypes = {
+  onShowUserMenu: PropTypes.func.isRequired,
+  puedeCrearUsuario: PropTypes.bool,
+  onCrearUsuario: PropTypes.func,
 };
 
 export default Navbar;

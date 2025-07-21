@@ -1,9 +1,9 @@
 import { useState } from "react";
 import RegisterPage from "./RegisterPage";
 import chems from "../assets/website/logo.jpeg";
-import { FaUser, FaLock, FaEnvelope, FaEye, FaEyeSlash,  FaSignInAlt, FaKey, FaArrowLeft } from "react-icons/fa";
+import { FaUser, FaLock, FaEnvelope, FaEye, FaEyeSlash, FaSignInAlt, FaKey, FaArrowLeft } from "react-icons/fa";
 import { MdOutlinePassword } from "react-icons/md";
- import PropTypes from "prop-types";
+import PropTypes from "prop-types";
 
 export default function LoginPage({ onLogin }) {
   const [form, setForm] = useState({ usuario: "", password: "" });
@@ -24,6 +24,7 @@ export default function LoginPage({ onLogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -36,14 +37,10 @@ export default function LoginPage({ onLogin }) {
       setError("Por favor, completa todos los campos.");
       return;
     }
-  
-    
-    LoginPage.propTypes = {
-      onLogin: PropTypes.func,
-    };
+
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:6001/int/user/login", {
+      const res = await fetch(`${API_URL}/int/user/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -58,8 +55,8 @@ export default function LoginPage({ onLogin }) {
         return;
       }
 
-      // 🔍 VERIFICAR SI EL USUARIO TIENE CONTRASEÑA TEMPORAL
-      if (data.user.hasTemporaryPassword) {
+      // Verificar si el usuario tiene contraseña temporal
+      if (data.hasTemporaryPassword) {
         setTempPasswordUser(data.user);
         setShowChangePassword(true);
         setLoading(false);
@@ -69,16 +66,16 @@ export default function LoginPage({ onLogin }) {
 
       // Login normal si no hay contraseña temporal
       localStorage.setItem("auth", "true");
-      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("accessToken", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
       if (onLogin) {
-        onLogin(data.user, data.accessToken);
+        onLogin(data.user, data.token);
       } else {
         window.location.reload();
       }
-
     } catch (err) {
+      console.error("Error en el inicio de sesión:", err);
       setError("Error de conexión con el servidor.");
       setLoading(false);
     }
@@ -108,7 +105,7 @@ export default function LoginPage({ onLogin }) {
     setForgotPasswordLoading(true);
 
     try {
-      const res = await fetch("http://localhost:6001/int/user/recover-pass", {
+      const res = await fetch(`${API_URL}/int/user/recover-pass`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotPasswordEmail }),
@@ -123,6 +120,7 @@ export default function LoginPage({ onLogin }) {
         setForgotPasswordMessage(data.message || "Error al enviar el correo de recuperación.");
       }
     } catch (err) {
+      console.error("Error en recuperación de contraseña:", err);
       setForgotPasswordMessage("Error de conexión con el servidor.");
     }
 
@@ -142,6 +140,7 @@ export default function LoginPage({ onLogin }) {
     }, 1000);
   };
 
+  // Cambiar contraseña temporal (NO pedir email, usar tempPasswordUser.email)
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setChangePasswordError("");
@@ -164,11 +163,11 @@ export default function LoginPage({ onLogin }) {
     setChangePasswordLoading(true);
 
     try {
-      const res = await fetch("http://localhost:6001/int/user/change-temp-password", {
+      const res = await fetch(`${API_URL}/int/user/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: tempPasswordUser._id,
+          email: tempPasswordUser?.email,
           newPassword: newPassword
         }),
       });
@@ -176,24 +175,42 @@ export default function LoginPage({ onLogin }) {
       const data = await res.json();
 
       if (res.ok) {
-        localStorage.setItem("auth", "true");
-        localStorage.setItem("accessToken", data.accessToken);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        // Iniciar sesión automáticamente después de cambiar la contraseña
+        const loginRes = await fetch(`${API_URL}/int/user/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nombre: tempPasswordUser?.nombre,
+            password: newPassword,
+          }),
+        });
+        const loginData = await loginRes.json();
 
-        alert("🎉 Contraseña cambiada exitosamente. Bienvenido!");
-
-        if (onLogin) {
-          onLogin(data.user, data.accessToken);
+        if (loginRes.ok) {
+          localStorage.setItem("auth", "true");
+          localStorage.setItem("accessToken", loginData.token);
+          localStorage.setItem("user", JSON.stringify(loginData.user));
+          if (onLogin) {
+            onLogin(loginData.user, loginData.token);
+          } else {
+            window.location.reload();
+          }
         } else {
-          window.location.reload();
+          alert("Contraseña cambiada, pero hubo un error al iniciar sesión automáticamente. Intenta iniciar sesión manualmente.");
+          setShowChangePassword(false);
+          setShowForgotPassword(false);
         }
+        setForgotPasswordEmail("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setTempPasswordUser(null);
       } else {
         setChangePasswordError(data.message || "Error al cambiar la contraseña.");
       }
     } catch (err) {
+      console.error("Error al cambiar la contraseña:", err);
       setChangePasswordError("Error de conexión con el servidor.");
     }
-
     setChangePasswordLoading(false);
   };
 
@@ -225,6 +242,18 @@ export default function LoginPage({ onLogin }) {
           <form onSubmit={handleChangePassword} className="space-y-5">
             <div>
               <label className="block mb-1 text-gray-700 font-semibold flex items-center gap-2">
+                <FaEnvelope /> Correo Electrónico
+              </label>
+              <input
+                type="email"
+                value={tempPasswordUser?.email || ""}
+                readOnly
+                disabled
+                className="w-full px-4 py-3 border rounded-lg bg-gray-100 border-gray-300"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 text-gray-700 font-semibold flex items-center gap-2">
                 <FaLock /> Nueva Contraseña
               </label>
               <div className="relative">
@@ -233,13 +262,12 @@ export default function LoginPage({ onLogin }) {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-                  placeholder="Ingresa tu nueva contraseña"
-                  autoFocus
+                  placeholder="Nueva contraseña"
                   disabled={changePasswordLoading}
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="btn-password-toggle absolute right-3 top-2 -translate-y-1.3 focus:outline-none"
                   tabIndex={-1}
                   onClick={() => setShowNewPassword((v) => !v)}
                   aria-label="Mostrar/Ocultar contraseña"
@@ -249,7 +277,6 @@ export default function LoginPage({ onLogin }) {
               </div>
               <p className="text-xs text-gray-500 mt-1">Mínimo 6 caracteres</p>
             </div>
-
             <div>
               <label className="block mb-1 text-gray-700 font-semibold flex items-center gap-2">
                 <FaLock /> Confirmar Contraseña
@@ -265,7 +292,7 @@ export default function LoginPage({ onLogin }) {
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="btn-password-toggle absolute right-3 top-2 -translate-y-1.3 focus:outline-none"
                   tabIndex={-1}
                   onClick={() => setShowConfirmPassword((v) => !v)}
                   aria-label="Mostrar/Ocultar contraseña"
@@ -274,13 +301,11 @@ export default function LoginPage({ onLogin }) {
                 </button>
               </div>
             </div>
-
             {changePasswordError && (
               <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm border border-red-200">
                 ⚠️ {changePasswordError}
               </div>
             )}
-
             <button
               type="submit"
               className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition flex items-center justify-center gap-2"
@@ -288,7 +313,7 @@ export default function LoginPage({ onLogin }) {
             >
               {changePasswordLoading ? (
                 <>
-                  <span className="animate-spin mr-2 border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>
+                  <span className="animate-spin mr-2 border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>{" "}
                   Cambiando contraseña...
                 </>
               ) : (
@@ -297,7 +322,6 @@ export default function LoginPage({ onLogin }) {
                 </>
               )}
             </button>
-
             <div className="text-center">
               <p className="text-xs text-gray-500">
                 Esta acción es obligatoria por seguridad
@@ -310,6 +334,28 @@ export default function LoginPage({ onLogin }) {
   }
 
   if (showForgotPassword) {
+    let buttonContent;
+    if (forgotPasswordLoading) {
+      buttonContent = (
+        <>
+          <span className="animate-spin mr-2 border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>{" "}
+          Enviando...
+        </>
+      );
+    } else if (cooldown > 0) {
+      buttonContent = (
+        <>
+          ⏱️ Espera {cooldown} segundos
+        </>
+      );
+    } else {
+      buttonContent = (
+        <>
+          <FaEnvelope /> Enviar Correo de Recuperación
+        </>
+      );
+    }
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-secondary">
         <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
@@ -338,19 +384,21 @@ export default function LoginPage({ onLogin }) {
                 disabled={forgotPasswordLoading || cooldown > 0}
               />
             </div>
-
-            {forgotPasswordMessage && (
-              <div className={`p-4 rounded-lg text-sm ${
-                forgotPasswordMessage.includes('✅') 
-                  ? 'bg-green-50 text-green-700 border border-green-200' 
-                  : forgotPasswordMessage.includes('⏱️')
-                  ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
-                  : 'bg-red-50 text-red-700 border border-red-200'
-              }`}>
-                {forgotPasswordMessage}
-              </div>
-            )}
-
+            {forgotPasswordMessage && (() => {
+              let messageClass = '';
+              if (forgotPasswordMessage.includes('✅')) {
+                messageClass = 'bg-green-50 text-green-700 border border-green-200';
+              } else if (forgotPasswordMessage.includes('⏱️')) {
+                messageClass = 'bg-yellow-50 text-yellow-700 border border-yellow-200';
+              } else {
+                messageClass = 'bg-red-50 text-red-700 border border-red-200';
+              }
+              return (
+                <div className={`p-4 rounded-lg text-sm ${messageClass}`}>
+                  {forgotPasswordMessage}
+                </div>
+              );
+            })()}
             <button
               type="submit"
               className={`w-full py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
@@ -360,22 +408,8 @@ export default function LoginPage({ onLogin }) {
               }`}
               disabled={forgotPasswordLoading || cooldown > 0}
             >
-              {forgotPasswordLoading ? (
-                <>
-                  <span className="animate-spin mr-2 border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>
-                  Enviando...
-                </>
-              ) : cooldown > 0 ? (
-                <>
-                  ⏱️ Espera {cooldown} segundos
-                </>
-              ) : (
-                <>
-                  <FaEnvelope /> Enviar Correo de Recuperación
-                </>
-              )}
+              {buttonContent}
             </button>
-
             <div className="text-center space-y-2">
               <button
                 type="button"
@@ -392,7 +426,6 @@ export default function LoginPage({ onLogin }) {
               </button>
             </div>
           </form>
-
           {/* Información adicional */}
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <div className="flex items-start space-x-2">
@@ -447,40 +480,36 @@ export default function LoginPage({ onLogin }) {
               disabled={loading}
             />
           </div>
-
           <div>
             <label className="block mb-1 text-gray-700 font-semibold flex items-center gap-2">
               <FaLock /> Contraseña
             </label>
-           <div className="relative">
-  <input
-    type={showPassword ? "text" : "password"}
-    name="password"
-    value={form.password}
-    onChange={handleChange}
-    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-    placeholder="Tu contraseña"
-    disabled={loading}
-  />
-<button
-  type="button"
-  className="btn-password-toggle absolute right-3 top-2 -translate-y-1.3 focus:outline-none"
-  tabIndex={-1}
-  onClick={() => setShowPassword((v) => !v)}
-  aria-label="Mostrar/Ocultar contraseña"
->
-  {showPassword ? <FaEyeSlash /> : <FaEye />}
-</button>
-
-      </div>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
+                placeholder="Tu contraseña"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="btn-password-toggle absolute right-3 top-2 -translate-y-1.3 focus:outline-none"
+                tabIndex={-1}
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label="Mostrar/Ocultar contraseña"
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
           </div>
-
           {error && (
             <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm border border-red-200 flex items-center gap-2">
               <MdOutlinePassword className="text-xl" /> {error}
             </div>
           )}
-
           <button
             type="submit"
             className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition flex items-center justify-center gap-2"
@@ -488,7 +517,7 @@ export default function LoginPage({ onLogin }) {
           >
             {loading ? (
               <>
-                <span className="animate-spin mr-2 border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>
+                <span className="animate-spin mr-2 border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>{" "}
                 Iniciando sesión...
               </>
             ) : (
@@ -497,7 +526,6 @@ export default function LoginPage({ onLogin }) {
               </>
             )}
           </button>
-
           <div className="text-center space-y-2">
             <button
               type="button"
@@ -507,10 +535,13 @@ export default function LoginPage({ onLogin }) {
             >
               <FaKey /> ¿Olvidaste tu contraseña?
             </button>
-
           </div>
         </form>
       </div>
     </div>
   );
 }
+
+LoginPage.propTypes = {
+  onLogin: PropTypes.func,
+};

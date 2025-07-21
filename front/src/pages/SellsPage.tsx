@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { FaShoppingCart, FaUser, FaCalendarAlt, FaDollarSign, FaEdit, FaTrash, FaEye, FaBoxOpen } from "react-icons/fa";
 import apiService from "../services/api";
+import { FaPlus } from "react-icons/fa"; 
+
 
 type ExtraIngredient = {
   name: string;
@@ -14,6 +17,7 @@ type CartItem = {
   cantidad: number;
   precio_unitario: number;
   subtotal: number;
+  imagen?: string;
   extraIngredients?: ExtraIngredient[];
   isTorta?: boolean;
 };
@@ -22,16 +26,50 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
   const [sells, setSells] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [stock, setStock] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedSell, setSelectedSell] = useState<any>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [editCart, setEditCart] = useState<CartItem[]>([]);
   const [vendedorId] = useState(1);
+
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const [theme, setTheme] = useState(
+    document.documentElement.classList.contains("dark") ||
+    document.body.dataset.theme === "dark" ||
+    localStorage.getItem("theme") === "dark"
+      ? "dark"
+      : "light"
+  );
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const isDark =
+        document.documentElement.classList.contains("dark") ||
+        document.body.dataset.theme === "dark" ||
+        localStorage.getItem("theme") === "dark";
+      setTheme(isDark ? "dark" : "light");
+    });
+    observer.observe(document.documentElement, { attributes: true });
+    observer.observe(document.body, { attributes: true });
+    return () => observer.disconnect();
+  }, []);
+  const cardBg = theme === "dark" ? "bg-slate-800 border border-slate-700" : "bg-white border border-gray-200";
+  const cardText = theme === "dark" ? "text-slate-100" : "text-gray-900";
+  const modalBg = theme === "dark" ? "bg-slate-800 border border-slate-700" : "bg-white border border-gray-200";
+  const modalTitle = theme === "dark" ? "text-amber-400" : "text-primary";
 
   // Mapeo de productos a ingredientes (NOMBRES EXACTOS como en stock)
   const PRODUCT_INGREDIENTS_MAP = {
-    // Tortas - todas requieren Pan
     "Torta de Adobada SENCILLA": ["Pan"],
     "Torta de Adobada MIXTO": ["Pan"],
     "Torta de Adobada TRIPLE": ["Pan"],
@@ -44,8 +82,6 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
     "Torta de Jamón SENCILLA": ["Pan"],
     "Torta de Jamón MIXTO": ["Pan"],
     "Torta de Jamón TRIPLE": ["Pan"],
-    
-    // Bebidas - control directo (nombres exactos)
     "Coca-Cola": ["Coca-Cola"],
     "Pepsi": ["Pepsi"],
     "Agua Natural": ["Agua Natural"],
@@ -53,8 +89,6 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
     "Agua de Jamaica": ["Agua de Jamaica"],
     "Agua de Tamarindo": ["Agua de Tamarindo"],
     "Refresco": ["Refresco"],
-    
-    // Pan individual
     "Pan Individual": ["Pan"],
     "Bolillo": ["Pan"],
     "Pan": ["Pan"]
@@ -80,37 +114,49 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
     loadData();
   }, []);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [sellsResponse, productsResponse, stockResponse] = await Promise.all([
-        apiService.getAllSells(),
-        apiService.getAllProducts(),
-        apiService.getAllStock()
-      ]);
-      
+const loadData = async () => {
+  try {
+    setLoading(true);
+    const [sellsResponse, productsResponse, stockResponse, usersResponse] = await Promise.all([
+      apiService.getAllSells(),
+      apiService.getAllProducts(),
+      apiService.getAllStock(),
+      apiService.getAllUsers()
+    ]);
       if (sellsResponse.sellsList) {
-        setSells(sellsResponse.sellsList);
+        // Filtrar ventas de los últimos 15 días
+        const now = new Date();
+        setSells(sellsResponse.sellsList.filter(sell => {
+          const fechaVenta = new Date(sell.fecha);
+          return (now.getTime() - fechaVenta.getTime()) / (1000 * 60 * 60 * 24) <= 15;
+        }));
       }
       if (productsResponse.productsList) {
         setProducts(productsResponse.productsList.filter(p => p.status === 'activo'));
       }
       if (stockResponse.stockList) {
         setStock(stockResponse.stockList.filter(s => s.status === 'activo'));
-        
-        // Debug mejorado
-        console.log('🔍 DEBUG STOCK FRONTEND:');
-        console.log('📦 Stock cargado:');
-        stockResponse.stockList.filter(s => s.status === 'activo').forEach(s => {
-          console.log(`  - "${s.producto}": ${s.cantidad} ${s.unidad}`);
-        });
       }
+      if (usersResponse.usersList) {
+        setUsers(usersResponse.usersList);
+      }
+       if (Array.isArray(usersResponse)) {
+      setUsers(usersResponse);
+    } else if (usersResponse.usersList) {
+      setUsers(usersResponse.usersList);
+    } 
     } catch (error) {
       console.error('Error cargando datos:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  // Función para obtener nombre de usuario por id
+const getUserName = (id) => {
+  const user = users.find(u => String(u._id) === String(id));
+  return user ? user.nombre : `ID: ${id}`;
+};
 
   // Función para verificar si un producto es una torta
   const isTorta = (productName) => {
@@ -129,11 +175,9 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
   // Función para verificar si hay suficiente stock de ingredientes
   const checkIngredientsAvailability = (productName, requestedQuantity) => {
     const requiredIngredients = getRequiredIngredients(productName, requestedQuantity);
-    
     for (const { ingredient, required } of requiredIngredients) {
       const stockItem = stock.find(s => s.producto === ingredient);
       const available = stockItem ? stockItem.cantidad : 0;
-      
       if (available < required) {
         return {
           available: false,
@@ -141,7 +185,6 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
         };
       }
     }
-    
     return { available: true };
   };
 
@@ -152,73 +195,45 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
   };
 
   // Funciones para carrito
-  const addToCart = (productId) => {
-    const product = products.find(p => p._id === parseInt(productId));
-    if (!product) return;
+ const addToCart = (productId: number, extraIngredients: ExtraIngredient[] = []) => {
+  const product = products.find(p => p._id === productId);
+  if (!product) return;
 
-    const existingItem = cart.find(item => item.producto_id === product._id);
-    const currentQuantity = existingItem ? existingItem.cantidad : 0;
-    const newQuantity = currentQuantity + 1;
+  // Solo fusiona si el producto y los ingredientes extra son iguales
+  const existingItem = cart.find(item =>
+    item.producto_id === product._id &&
+    JSON.stringify(item.extraIngredients || []) === JSON.stringify(extraIngredients || [])
+  );
 
-    // Verificar ingredientes disponibles
-    const ingredientCheck = checkIngredientsAvailability(product.nombre, newQuantity);
-    if (!ingredientCheck.available) {
-      alert(ingredientCheck.message);
-      return;
-    }
-    
-    if (existingItem) {
-      setCart(cart.map(item => 
-        item.producto_id === product._id 
-          ? { 
-              ...item, 
-              cantidad: newQuantity, 
-              subtotal: (newQuantity * item.precio_unitario) + (item.extraIngredients?.reduce((sum, extra) => sum + (extra.price * extra.quantity * newQuantity), 0) || 0)
-            }
-          : item
-      ));
-    } else {
-      setCart([...cart, {
-        producto_id: product._id,
-        nombre: product.nombre,
-        cantidad: 1,
-        precio_unitario: product.precio,
-        subtotal: product.precio,
-        extraIngredients: [],
-        isTorta: isTorta(product.nombre)
-      }]);
-    }
-  };
+  const isTortaProduct = isTorta(product.nombre);
 
-  const removeFromCart = (productId) => {
-    setCart(cart.filter(item => item.producto_id !== productId));
-  };
-
-  const updateCartQuantity = (productId, newQuantity) => {
-    if (newQuantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-
-    const product = products.find(p => p._id === productId);
-    if (product) {
-      const ingredientCheck = checkIngredientsAvailability(product.nombre, newQuantity);
-      if (!ingredientCheck.available) {
-        alert(ingredientCheck.message);
-        return;
-      }
-    }
-
-    setCart(cart.map(item => 
-      item.producto_id === productId 
-        ? { 
-            ...item, 
-            cantidad: newQuantity, 
-            subtotal: (newQuantity * item.precio_unitario) + (item.extraIngredients?.reduce((sum, extra) => sum + (extra.price * extra.quantity * newQuantity), 0) || 0)
+  if (existingItem) {
+    const newQuantity = existingItem.cantidad + 1;
+    setCart(cart.map(item =>
+      item.producto_id === product._id &&
+      JSON.stringify(item.extraIngredients || []) === JSON.stringify(extraIngredients || [])
+        ? {
+            ...item,
+            cantidad: newQuantity,
+            subtotal: (newQuantity * item.precio_unitario) +
+              ((item.extraIngredients as ExtraIngredient[] | undefined)?.reduce((sum, extra) => sum + (extra.price * extra.quantity * newQuantity), 0) || 0)
           }
         : item
     ));
-  };
+  } else {
+    setCart([...cart, {
+      producto_id: product._id,
+      nombre: product.nombre,
+      cantidad: 1,
+      precio_unitario: product.precio,
+      subtotal: product.precio +
+        ((extraIngredients as ExtraIngredient[]).reduce((sum, extra) => sum + (extra.price * extra.quantity), 0) || 0),
+      imagen: product.imagen,
+      extraIngredients: isTortaProduct ? extraIngredients : [],
+      isTorta: isTortaProduct
+    }]);
+  }
+};
 
   // Función para agregar ingrediente extra
   const addExtraIngredient = (productId, ingredient) => {
@@ -226,20 +241,17 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
       if (item.producto_id === productId) {
         const existingExtra = item.extraIngredients?.find(extra => extra.name === ingredient.name);
         let updatedExtras;
-        
         if (existingExtra) {
-          updatedExtras = (item.extraIngredients ?? []).map(extra => 
-            extra.name === ingredient.name 
+          updatedExtras = (item.extraIngredients ?? []).map(extra =>
+            extra.name === ingredient.name
               ? { ...extra, quantity: extra.quantity + 1 }
               : extra
           );
         } else {
           updatedExtras = [...(item.extraIngredients || []), { ...ingredient, quantity: 1 }];
         }
-        
         const extraCost = updatedExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity * item.cantidad), 0);
         const newSubtotal = (item.cantidad * item.precio_unitario) + extraCost;
-        
         return {
           ...item,
           extraIngredients: updatedExtras,
@@ -254,15 +266,13 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
   const removeExtraIngredient = (productId, ingredientName) => {
     setCart(cart.map(item => {
       if (item.producto_id === productId) {
-        const updatedExtras = item.extraIngredients?.map(extra => 
-          extra.name === ingredientName 
+        const updatedExtras = item.extraIngredients?.map(extra =>
+          extra.name === ingredientName
             ? { ...extra, quantity: Math.max(0, extra.quantity - 1) }
             : extra
         ).filter(extra => extra.quantity > 0) || [];
-        
         const extraCost = updatedExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity * item.cantidad), 0);
         const newSubtotal = (item.cantidad * item.precio_unitario) + extraCost;
-        
         return {
           ...item,
           extraIngredients: updatedExtras,
@@ -277,15 +287,19 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
     return cart.reduce((total, item) => total + item.subtotal, 0);
   };
 
+  // Editar venta (solo si dentro de 1hr)
+  const canEditSell = (sell) => {
+    const now = new Date();
+    const fechaVenta = new Date(sell.fecha);
+    return (now.getTime() - fechaVenta.getTime()) / (1000 * 60 * 60) <= 1;
+  };
+
   const handleCreateSale = async (e) => {
     e.preventDefault();
-    
     if (cart.length === 0) {
       alert('Agrega al menos un producto al carrito');
       return;
     }
-
-    // Verificación final de ingredientes antes de enviar
     for (const item of cart) {
       const ingredientCheck = checkIngredientsAvailability(item.nombre, item.cantidad);
       if (!ingredientCheck.available) {
@@ -293,7 +307,6 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
         return;
       }
     }
-
     try {
       const saleData = {
         productos: cart,
@@ -301,13 +314,10 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
         vendedor_id: vendedorId,
         status: "activo"
       };
-      
-      console.log('📤 Enviando venta:', saleData);
-      
       await apiService.createSell(saleData);
       setCart([]);
       setShowCreateModal(false);
-      loadData(); // Recargar datos para ver el stock actualizado
+      loadData();
       alert('Venta creada exitosamente y stock actualizado');
     } catch (error) {
       console.error('Error creando venta:', error);
@@ -319,7 +329,37 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
     }
   };
 
+  // Editar venta
+  const handleEditSell = async () => {
+    if (!selectedSell) return;
+    try {
+      const saleData = {
+        productos: editCart,
+        total: editCart.reduce((total, item) => total + item.subtotal, 0),
+        vendedor_id: selectedSell.vendedor_id,
+        status: selectedSell.status
+      };
+      await apiService.updateSell(selectedSell._id, saleData);
+      setShowEditModal(false);
+      setSelectedSell(null);
+      loadData();
+      alert('Venta editada exitosamente');
+    } catch (error) {
+      console.error('Error editando venta:', error);
+      alert('Error al editar la venta');
+    }
+  };
+
+  // Eliminar venta (solo si dentro de 15 días)
   const handleDeleteSell = async (sellId) => {
+    const sell = sells.find(s => s._id === sellId);
+    if (!sell) return;
+    const now = new Date();
+    const fechaVenta = new Date(sell.fecha);
+    if ((now.getTime() - fechaVenta.getTime()) / (1000 * 60 * 60 * 24) > 15) {
+      alert('Solo puedes eliminar ventas realizadas en los últimos 15 días');
+      return;
+    }
     if (confirm('¿Estás seguro de eliminar esta venta?')) {
       try {
         await apiService.deleteSell(sellId);
@@ -335,6 +375,16 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
   const openViewModal = (sell) => {
     setSelectedSell(sell);
     setShowViewModal(true);
+  };
+
+  const openEditModal = (sell) => {
+    setSelectedSell(sell);
+    setEditCart(sell.productos.map(p => ({
+      ...p,
+      imagen: products.find(prod => prod._id === p.producto_id)?.imagen,
+      isTorta: isTorta(p.nombre) 
+    })));
+    setShowEditModal(true);
   };
 
   // Función para obtener el tipo de producto
@@ -357,131 +407,199 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary via-primary/80 to-secondary">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
+  <div className={`min-h-screen ${theme === "dark"
+    ? "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
+    : "bg-gradient-to-br from-primary via-primary/80 to-secondary"
+  } transition-colors duration-300`}>
+    <div className="container mx-auto px-4 py-8">
+      <div className="min-h-screen">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
-              💰 Gestión de Ventas
+          
+         <div>
+            <h1
+              className={`text-4xl font-bold mb-2 flex items-center gap-2 ${
+                theme === "dark" ? "text-amber-200" : "text-white"
+              }`}
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              <FaShoppingCart className="mb-1" /> Gestión de Ventas
             </h1>
-            <p className="text-white/70">Control de ventas con reducción automática de stock</p>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-white text-primary px-6 py-3 rounded-full font-semibold hover:bg-primary hover:text-white transition-all duration-300 shadow-lg"
-          >
-            🛒 Nueva Venta
-          </button>
-        </div>
 
-        {/* Info panel */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 mb-6">
-          <div className="flex items-center gap-3 text-white">
-            <div className="text-2xl">🌮</div>
-            <div>
-              <h3 className="font-semibold">Sistema de Reducción Automática de Stock</h3>
-              <p className="text-sm text-white/80">
-                Las tortas reducen "Pan" del stock automáticamente. Las bebidas reducen su producto específico.
-              </p>
+              <button
+                onClick={() => setShowCreateModal(true)} 
+               className={`flex items-center gap-2 ${
+          theme === "dark"
+            ? "bg-amber-700 text-white hover:bg-amber-800"
+            : "bg-primary text-white hover:bg-secondary"
+        } px-6 py-3 rounded-full font-semibold transition-all duration-300 shadow-lg`}
+      >
+        <FaShoppingCart /> Agregar Venta
+      </button>
+        </div>
+        <div className="overflow-x-auto mb-10 mt-6">
+          <div className={`rounded-2xl shadow-xl overflow-hidden ${theme === "dark" ? "bg-slate-800 border border-slate-700" : "bg-white border border-gray-200"}`}>
+            <div className={`text-right font-medium text-xl px-6 pt-4 ${theme === "dark" ? "text-amber-200" : "text-primary"}`}>
+              {currentTime.toLocaleTimeString('es-MX', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+              })}
+              <div className={`${theme === "dark" ? "text-amber-300/70" : "text-primary/70"} text-xs`}>
+                {currentTime.toLocaleDateString('es-MX', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </div>
             </div>
+<table className="w-full mt-2">
+  <thead className={`${theme === "dark" ? "bg-slate-900 text-amber-100" : "bg-primary text-white"}`}>
+    <tr>
+      <th className="px-6 py-4 text-left"><FaCalendarAlt className="inline mr-1" />Fecha</th>
+      <th className="px-6 py-4 text-left"><FaShoppingCart className="inline mr-1" />Productos</th>
+      <th className="px-6 py-4 text-left"><FaDollarSign className="inline mr-1" />Total</th>
+      <th className="px-6 py-4 text-left"><FaUser className="inline mr-1" />Vendedor</th>
+      <th className="px-6 py-4 text-left">Status</th>
+      <th className="px-6 py-4 text-left">Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {sells.map((sell, index) => (
+      <tr
+        key={sell._id}
+        className={`
+          ${index % 2 === 0
+            ? theme === "dark" ? "bg-slate-900" : "bg-gray-50"
+            : theme === "dark" ? "bg-slate-800" : "bg-white"}
+          transition-colors
+        `}
+      >
+        {/* Ya no mostramos el ID */}
+        <td className="px-6 py-4">
+          {new Date(sell.fecha).toLocaleDateString('es-MX', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </td>
+        <td className="px-6 py-4">
+          <div className="flex flex-wrap gap-2">
+            {sell.productos?.map((p, idx) => (
+              <div
+                key={idx}
+                className={`
+                  flex items-center gap-1 px-2 py-1 rounded-full text-xs
+                  ${theme === "dark" ? "bg-blue-950 text-blue-200" : "bg-blue-100 text-blue-800"}
+                `}
+              >
+                {products.find((prod) => prod._id === p.producto_id && prod.imagen) ? (
+                  <img
+                    src={products.find((prod) => prod._id === p.producto_id).imagen}
+                    alt={p.nombre}
+                    className="w-6 h-6 rounded-full object-cover"
+                  />
+                ) : (
+                  <FaBoxOpen className="w-5 h-5" />
+                )}
+                <span>{p.nombre}</span>
+                <span className="font-bold">x{p.cantidad}</span>
+              </div>
+            ))}
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <span className={`font-bold text-lg ${theme === "dark" ? "text-green-400" : "text-green-600"}`}>
+            ${sell.total}
+          </span>
+        </td>
+        <td className="px-6 py-4">
+      {getUserName(sell.vendedor_id)}
+    </td>
+        <td className="px-6 py-4">
+          <span className={`
+            px-3 py-1 rounded-full text-xs font-semibold
+            ${sell.status === 'activo'
+              ? theme === "dark" ? "bg-green-900 text-green-300" : "bg-green-100 text-green-800"
+              : theme === "dark" ? "bg-red-900 text-red-300" : "bg-red-100 text-red-800"}
+          `}>
+            {sell.status}
+          </span>
+        </td>
+        <td className="px-6 py-4">
+          <div className="flex gap-1">
+            <button
+              onClick={() => openViewModal(sell)}
+              className={`
+                px-2 py-1 rounded text-xs flex items-center gap-1 transition
+                ${theme === "dark"
+                  ? "bg-blue-700 text-white hover:bg-blue-800"
+                  : "bg-blue-500 text-white hover:bg-blue-600"}
+              `}
+            >
+              <FaEye /> Ver
+            </button>
+            {canEditSell(sell) && (
+              <button
+                onClick={() => openEditModal(sell)}
+                className={`
+                  px-2 py-1 rounded text-xs flex items-center gap-1 transition
+                  ${theme === "dark"
+                    ? "bg-yellow-700 text-white hover:bg-yellow-800"
+                    : "bg-yellow-500 text-white hover:bg-yellow-600"}
+                `}
+              >
+                <FaEdit /> Editar
+              </button>
+            )}
+            <button
+              onClick={() => handleDeleteSell(sell._id)}
+              className={`
+                px-2 py-1 rounded text-xs flex items-center gap-1 transition
+                ${theme === "dark"
+                  ? "bg-red-700 text-white hover:bg-red-800"
+                  : "bg-red-500 text-white hover:bg-red-600"}
+              `}
+            >
+              <FaTrash /> Eliminar
+            </button>
+          </div>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+
           </div>
         </div>
-
-        {/* Sales Table */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-primary text-white">
-                <tr>
-                  <th className="px-6 py-4 text-left">ID</th>
-                  <th className="px-6 py-4 text-left">Fecha</th>
-                  <th className="px-6 py-4 text-left">Productos</th>
-                  <th className="px-6 py-4 text-left">Total</th>
-                  <th className="px-6 py-4 text-left">Vendedor</th>
-                  <th className="px-6 py-4 text-left">Status</th>
-                  <th className="px-6 py-4 text-left">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sells.map((sell, index) => (
-                  <tr key={sell._id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                    <td className="px-6 py-4 font-mono text-sm">#{sell._id}</td>
-                    <td className="px-6 py-4">
-                      {new Date(sell.fecha).toLocaleDateString('es-MX', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                        {sell.productos?.length || 0} productos
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-green-600 text-lg">${sell.total}</span>
-                    </td>
-                    <td className="px-6 py-4">ID: {sell.vendedor_id || 'N/A'}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        sell.status === 'activo' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {sell.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-1">
-                        <button 
-                          onClick={() => openViewModal(sell)}
-                          className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 transition"
-                        >
-                          👁️ Ver
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteSell(sell._id)}
-                          className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 transition"
-                        >
-                          🗑️ Eliminar
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Empty state */}
         {sells.length === 0 && (
           <div className="text-center py-12">
-            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 inline-block">
-              <div className="text-6xl mb-4">💰</div>
-              <p className="text-white text-xl mb-4">No hay ventas registradas</p>
-              <p className="text-white/60 mb-6">en los últimos 15 días</p>
+            <div className={`${theme === "dark" ? "bg-slate-800/80" : "bg-white/10"} backdrop-blur-sm rounded-3xl p-8 inline-block`}>
+              <div className={`${theme === "dark" ? "text-amber-300" : "text-4xl"} mb-4`}><FaShoppingCart /></div>
+              <p className={`${theme === "dark" ? "text-amber-200" : "text-white"} text-xl mb-4`}>No hay ventas registradas</p>
+              <p className={`${theme === "dark" ? "text-amber-100/60" : "text-white/60"} mb-6`}>en los últimos 15 días</p>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="bg-white text-primary px-6 py-3 rounded-full font-semibold hover:bg-primary hover:text-white transition-all duration-300"
+                className={`px-6 py-3 rounded-full font-semibold flex items-center gap-2 transition-all duration-300
+                  ${theme === "dark"
+                    ? "bg-amber-400 text-slate-900 hover:bg-primary hover:text-white"
+                    : "bg-white text-primary hover:bg-primary hover:text-white"}
+                `}
               >
-                Realizar primera venta
+                <FaShoppingCart /> Realizar primera venta
               </button>
             </div>
           </div>
         )}
-
-        {/* Create Sale Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-              <h2 className="text-2xl font-bold mb-6 text-primary">🛒 Nueva Venta</h2>
-              
+            <div className={`${theme === "dark" ? "bg-slate-800 border border-slate-700" : "bg-white border border-gray-200"} rounded-2xl p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto`}>
+              <h2 className={`text-2xl font-bold mb-6 flex items-center gap-2 ${theme === "dark" ? "text-amber-400" : "text-primary"}`}><FaShoppingCart /> Nueva Venta</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Productos disponibles */}
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Productos Disponibles</h3>
                   <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -490,7 +608,6 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
                       const requiredIngredients = getRequiredIngredients(product.nombre, 1);
                       let canMake = true;
                       let stockInfo = "";
-
                       if (requiredIngredients.length > 0) {
                         for (const { ingredient, required } of requiredIngredients) {
                           const available = getAvailableStock(ingredient);
@@ -500,75 +617,98 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
                           stockInfo += `${ingredient}: ${available} `;
                         }
                       }
-                      
                       return (
-                        <div key={product._id} className={`border rounded-lg p-3 ${
-                          !canMake ? 'bg-red-50 border-red-200' : ''
-                        }`}>
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-medium">{product.nombre}</h4>
-                                <span className={`px-2 py-1 rounded-full text-xs ${
-                                  productType === 'torta' ? 'bg-orange-100 text-orange-800' :
-                                  productType === 'bebida' ? 'bg-blue-100 text-blue-800' :
-                                  productType === 'pan' ? 'bg-yellow-100 text-yellow-800' :
-                                  'bg-gray-100 text-gray-800'
-                                }`}>
-                                  {productType === 'torta' ? '🌮' : 
-                                   productType === 'bebida' ? '🥤' : 
-                                   productType === 'pan' ? '🍞' : '📦'} {productType}
-                                </span>
-                              </div>
-                              
-                              <p className="text-sm text-gray-600 mb-1">
-                                ${product.precio} - {product.tipo}
-                              </p>
-                              
-                              {requiredIngredients.length > 0 && (
-                                <div className="text-xs text-gray-500">
-                                  <span className="font-medium">Requiere: </span>
-                                  {stockInfo}
-                                  {!canMake && <span className="text-red-500 font-medium">⚠️ Sin stock</span>}
-                                </div>
-                              )}
-                            </div>
-                            
-                            <button
-                              onClick={() => addToCart(product._id)}
-                              disabled={!canMake}
-                              className={`px-3 py-1 rounded text-sm transition ${
-                                !canMake 
-                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                                  : 'bg-primary text-white hover:bg-secondary'
-                              }`}
-                            >
-                              + Agregar
-                            </button>
+                        <div key={product._id} className={`border rounded-lg p-3 flex gap-3 items-center ${!canMake ? 'bg-red-50 border-red-200' : ''}`}>
+                          <div>
+                            {product.imagen ? (
+                              <img src={product.imagen} alt={product.nombre} className="w-14 h-14 rounded-full object-cover border" />
+                            ) : (
+                              <FaBoxOpen className="w-14 h-14 text-gray-400" />
+                            )}
                           </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-medium">{product.nombre}</h4>
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                productType === 'torta' ? 'bg-orange-100 text-orange-800' :
+                                productType === 'bebida' ? 'bg-blue-100 text-blue-800' :
+                                productType === 'pan' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {productType === 'torta' ? '🌮' :
+                                  productType === 'bebida' ? '🥤' :
+                                    productType === 'pan' ? '🍞' : '📦'} {productType}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-1">
+                              ${product.precio} - {product.tipo}
+                            </p>
+                            {requiredIngredients.length > 0 && (
+                              <div className="text-xs text-gray-500">
+                                <span className="font-medium">Requiere: </span>
+                                {stockInfo}
+                                {!canMake && <span className="text-red-500 font-medium">⚠️ Sin stock</span>}
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => addToCart(product._id)}
+                            disabled={!canMake}
+                            className={`px-3 py-1 rounded text-sm transition ${
+                              !canMake
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-primary text-white hover:bg-secondary'
+                            }`}
+                          >
+                            + Agregar
+                          </button>
                         </div>
                       );
                     })}
                   </div>
                 </div>
-
-                {/* Carrito */}
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Carrito de Compra</h3>
                   {cart.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      <div className="text-4xl mb-2">🛒</div>
+                      <div className="text-4xl mb-2"><FaShoppingCart /></div>
                       <p>Carrito vacío</p>
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-96 overflow-y-auto">
                       {cart.map(item => {
                         const requiredIngredients = getRequiredIngredients(item.nombre, item.cantidad);
-                        
+                        function updateCartQuantity(producto_id: number, newQuantity: number): void {
+                          if (newQuantity < 1) {
+                            setCart(cart.filter(item => item.producto_id !== producto_id));
+                            return;
+                          }
+                          setCart(cart.map(item => {
+                            if (item.producto_id === producto_id) {
+                              const extraCost = (item.extraIngredients ?? []).reduce(
+                                (sum, extra) => sum + (extra.price * extra.quantity * newQuantity),
+                                0
+                              );
+                              return {
+                                ...item,
+                                cantidad: newQuantity,
+                                subtotal: (newQuantity * item.precio_unitario) + extraCost
+                              };
+                            }
+                            return item;
+                          }));
+                        }
                         return (
-                          <div key={item.producto_id} className="border rounded-lg p-4">
-                            <div className="flex justify-between items-start mb-3">
-                              <div>
+                          <div key={item.producto_id} className="border rounded-lg p-4 flex gap-3 items-center">
+                            <div>
+                              {item.imagen ? (
+                                <img src={item.imagen} alt={item.nombre} className="w-12 h-12 rounded-full object-cover border" />
+                              ) : (
+                                <FaBoxOpen className="w-12 h-12 text-gray-400" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
                                 <h4 className="font-medium">{item.nombre}</h4>
                                 {requiredIngredients.length > 0 && (
                                   <div className="text-xs text-gray-500">
@@ -579,26 +719,25 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
                                   </div>
                                 )}
                               </div>
-                              <button
-                                onClick={() => removeFromCart(item.producto_id)}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                            
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-2">
+                                                           <div className="flex items-center gap-2 mb-2">
                                 <button
                                   onClick={() => updateCartQuantity(item.producto_id, item.cantidad - 1)}
-                                  className="bg-gray-200 w-6 h-6 rounded flex items-center justify-center"
+                                  className={`w-6 h-6 rounded flex items-center justify-center font-bold transition
+                                    ${theme === "dark"
+                                      ? "bg-slate-700 text-amber-300 hover:bg-amber-500 hover:text-white border border-slate-600"
+                                      : "bg-gray-200 text-gray-800 hover:bg-primary hover:text-white"}
+                                  `}
                                 >
                                   -
                                 </button>
                                 <span className="w-8 text-center">{item.cantidad}</span>
                                 <button
                                   onClick={() => updateCartQuantity(item.producto_id, item.cantidad + 1)}
-                                  className="bg-gray-200 w-6 h-6 rounded flex items-center justify-center"
+                                  className={`w-6 h-6 rounded flex items-center justify-center font-bold transition
+                                    ${theme === "dark"
+                                      ? "bg-slate-700 text-amber-300 hover:bg-amber-500 hover:text-white border border-slate-600"
+                                      : "bg-gray-200 text-gray-800 hover:bg-primary hover:text-white"}
+                                  `}
                                 >
                                   +
                                 </button>
@@ -607,51 +746,48 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
                                 <p className="text-sm text-gray-600">${item.precio_unitario} base</p>
                                 <p className="font-bold">${item.subtotal}</p>
                               </div>
-                            </div>
-
-                            {/* Ingredientes extra - Solo para tortas */}
-                            {item.isTorta && (
-                              <div className="border-t pt-3">
-                                <h5 className="text-sm font-semibold mb-2">🌶️ Ingredientes Extra (+$5 c/u)</h5>
-                                
-                                {/* Mostrar ingredientes agregados */}
-                                {item.extraIngredients && item.extraIngredients.length > 0 && (
-                                  <div className="mb-2">
-                                    <div className="flex flex-wrap gap-1 mb-2">
-                                      {item.extraIngredients.map(extra => (
-                                        <span key={extra.name} className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
-                                          {extra.icon} {extra.name} x{extra.quantity}
-                                          <button
-                                            onClick={() => removeExtraIngredient(item.producto_id, extra.name)}
-                                            className="text-red-500 hover:text-red-700 ml-1"
-                                          >
-                                            ✕
-                                          </button>
-                                        </span>
-                                      ))}
+                              {item.isTorta && (
+                                <div className="border-t pt-3">
+                                  <h5 className="text-sm font-semibold mb-2">🌶️ Ingredientes Extra (+$5 c/u)</h5>
+                                  {item.extraIngredients && item.extraIngredients.length > 0 && (
+                                    <div className="mb-2">
+                                      <div className="flex flex-wrap gap-1 mb-2">
+                                        {item.extraIngredients.map(extra => (
+                                          <span key={extra.name} className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                                            {extra.icon} {extra.name} x{extra.quantity}
+                                              <button
+                                                onClick={() => removeExtraIngredient(item.producto_id, extra.name)}
+                                                className={`ml-1 font-bold rounded-full transition
+                                                  ${theme === "dark"
+                                                    ? "bg-red-700 text-white hover:bg-red-500 border border-red-800"
+                                                    : "text-red-500 hover:text-red-700"}
+                                                `}
+                                              >
+                                                ✕
+                                              </button>
+                                          </span>
+                                        ))}
+                                      </div>
                                     </div>
+                                  )}
+                                  <div className="grid grid-cols-3 gap-1">
+                                    {EXTRA_INGREDIENTS.map(ingredient => (
+                                      <button
+                                        key={ingredient.name}
+                                        onClick={() => addExtraIngredient(item.producto_id, ingredient)}
+                                        className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-100 transition border border-blue-200"
+                                        title={`Agregar ${ingredient.name} (+$${ingredient.price})`}
+                                      >
+                                        {ingredient.icon} {ingredient.name}
+                                      </button>
+                                    ))}
                                   </div>
-                                )}
-                                
-                                {/* Botones para agregar ingredientes */}
-                                <div className="grid grid-cols-3 gap-1">
-                                  {EXTRA_INGREDIENTS.map(ingredient => (
-                                    <button
-                                      key={ingredient.name}
-                                      onClick={() => addExtraIngredient(item.producto_id, ingredient)}
-                                      className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-100 transition border border-blue-200"
-                                      title={`Agregar ${ingredient.name} (+$${ingredient.price})`}
-                                    >
-                                      {ingredient.icon} {ingredient.name}
-                                    </button>
-                                  ))}
                                 </div>
-                              </div>
-                            )}
+                              )}
+                            </div>
                           </div>
                         );
                       })}
-                      
                       <div className="border-t pt-3 mt-3">
                         <div className="flex justify-between items-center text-lg font-bold">
                           <span>Total:</span>
@@ -662,7 +798,6 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
                   )}
                 </div>
               </div>
-
               <div className="flex gap-4 mt-6">
                 <button
                   onClick={() => {
@@ -684,13 +819,204 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
             </div>
           </div>
         )}
-
-        {/* View Modal */}
+        {showEditModal && selectedSell && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className={`${theme === "dark" ? "bg-slate-800 border border-slate-700" : "bg-white border border-gray-200"} rounded-2xl p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto`}>
+              <h2 className={`text-2xl font-bold mb-6 flex items-center gap-2 ${theme === "dark" ? "text-yellow-400" : "text-yellow-600"}`}><FaEdit /> Editar Venta</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Productos en Venta</h3>
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {editCart.map(item => (
+                      <div key={item.producto_id} className="border rounded-lg p-4 flex gap-3 items-center">
+                        <div>
+                          {item.imagen ? (
+                            <img src={item.imagen} alt={item.nombre} className="w-12 h-12 rounded-full object-cover border" />
+                          ) : (
+                            <FaBoxOpen className="w-12 h-12 text-gray-400" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-medium">{item.nombre}</h4>
+                          </div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <button
+                              onClick={() => setEditCart(editCart.map(i => i.producto_id === item.producto_id ? { ...i, cantidad: Math.max(1, i.cantidad - 1), subtotal: (Math.max(1, i.cantidad - 1) * i.precio_unitario) } : i))}
+                              className="bg-gray-200 w-6 h-6 rounded flex items-center justify-center"
+                            >
+                              -
+                            </button>
+                            <span className="w-8 text-center">{item.cantidad}</span>
+                            <button
+                              onClick={() => setEditCart(editCart.map(i => i.producto_id === item.producto_id ? { ...i, cantidad: i.cantidad + 1, subtotal: ((i.cantidad + 1) * i.precio_unitario) } : i))}
+                              className="bg-gray-200 w-6 h-6 rounded flex items-center justify-center"
+                            >
+                              +
+                            </button>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-gray-600">${item.precio_unitario} base</p>
+                            <p className="font-bold">${item.subtotal}</p>
+                          </div>
+                        </div>
+                        {item.isTorta && (
+                          <div className="border-t pt-3">
+                            <h5 className="text-sm font-semibold mb-2">🌶️ Ingredientes Extra (+$5 c/u)</h5>
+                            {item.extraIngredients && item.extraIngredients.length > 0 && (
+                              <div className="mb-2">
+                                <div className="flex flex-wrap gap-1 mb-2">
+                                  {item.extraIngredients.map(extra => (
+                                    <span key={extra.name} className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                                      {extra.icon} {extra.name} x{extra.quantity}
+                                      <button
+                                        onClick={() => {
+                                          setEditCart(editCart.map(i =>
+                                            i.producto_id === item.producto_id
+                                              ? {
+                                                  ...i,
+                                                  extraIngredients: (i.extraIngredients ?? [])
+                                                    .map(e =>
+                                                      e.name === extra.name
+                                                        ? { ...e, quantity: Math.max(0, e.quantity - 1) }
+                                                        : e
+                                                    )
+                                                    .filter(e => e.quantity > 0),
+                                                  subtotal:
+                                                    (i.cantidad * i.precio_unitario) +
+                                                    ((i.extraIngredients ?? [])
+                                                      .map(e =>
+                                                        e.name === extra.name
+                                                          ? { ...e, quantity: Math.max(0, e.quantity - 1) }
+                                                          : e
+                                                      )
+                                                      .filter(e => e.quantity > 0)
+                                                      .reduce((sum, e) => sum + (e.price * e.quantity * i.cantidad), 0))
+                                                }
+                                              : i
+                                          ));
+                                        }}
+                                        className="text-red-500 hover:text-red-700 ml-1"
+                                      >
+                                        ✕
+                                      </button>
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            <div className="grid grid-cols-3 gap-1">
+                              {EXTRA_INGREDIENTS.map(ingredient => (
+                                <button
+                                  key={ingredient.name}
+                                  onClick={() => {
+                                    setEditCart(editCart.map(i => {
+                                      if (i.producto_id === item.producto_id) {
+                                        const existingExtra = i.extraIngredients?.find(e => e.name === ingredient.name);
+                                        let updatedExtras;
+                                        if (existingExtra) {
+                                          updatedExtras = (i.extraIngredients ?? []).map(e =>
+                                            e.name === ingredient.name
+                                              ? { ...e, quantity: e.quantity + 1 }
+                                              : e
+                                          );
+                                        } else {
+                                          updatedExtras = [...(i.extraIngredients || []), { ...ingredient, quantity: 1 }];
+                                        }
+                                        const extraCost = updatedExtras.reduce((sum, e) => sum + (e.price * e.quantity * i.cantidad), 0);
+                                        return {
+                                          ...i,
+                                          extraIngredients: updatedExtras,
+                                          subtotal: (i.cantidad * i.precio_unitario) + extraCost
+                                        };
+                                      }
+                                      return i;
+                                    }));
+                                  }}
+                                  className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-100 transition border border-blue-200"
+                                  title={`Agregar ${ingredient.name} (+$${ingredient.price})`}
+                                >
+                                  {ingredient.icon} {ingredient.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <button
+                          onClick={() => setEditCart(editCart.filter(i => i.producto_id !== item.producto_id))}
+                          className="text-red-500 hover:text-red-700 ml-1"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Agregar Productos</h3>
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {products.map(product => (
+                      <div key={product._id} className="border rounded-lg p-3 flex gap-3 items-center">
+                        <div>
+                          {product.imagen ? (
+                            <img src={product.imagen} alt={product.nombre} className="w-12 h-12 rounded-full object-cover border" />
+                          ) : (
+                            <FaBoxOpen className="w-12 h-12 text-gray-400" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-medium">{product.nombre}</h4>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-1">
+                            ${product.precio} - {product.tipo}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            if (!editCart.find(i => i.producto_id === product._id)) {
+                              setEditCart([...editCart, {
+                                producto_id: product._id,
+                                nombre: product.nombre,
+                                cantidad: 1,
+                                precio_unitario: product.precio,
+                                subtotal: product.precio,
+                                imagen: product.imagen,
+                                extraIngredients: [],
+                                isTorta: isTorta(product.nombre)
+                              }]);
+                            }
+                          }}
+                          className="px-3 py-1 rounded text-sm bg-primary text-white hover:bg-secondary"
+                        >
+                          + Agregar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-4 mt-6">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleEditSell}
+                  className="flex-1 bg-yellow-500 text-white py-3 rounded-lg font-semibold hover:bg-yellow-600 transition"
+                >
+                  Guardar Cambios
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {showViewModal && selectedSell && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <h2 className="text-2xl font-bold mb-6 text-primary">👁️ Detalles de Venta</h2>
-              
+            <div className={`${theme === "dark" ? "bg-slate-800 border border-slate-700" : "bg-white border border-gray-200"} rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto`}>
+              <h2 className={`text-2xl font-bold mb-6 flex items-center gap-2 ${theme === "dark" ? "text-amber-400" : "text-primary"}`}><FaEye /> Detalles de Venta</h2>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -711,53 +1037,56 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Vendedor</p>
-                    <p className="font-semibold">ID: {selectedSell.vendedor_id}</p>
+                    <p className="font-semibold">{getUserName(selectedSell.vendedor_id)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Status</p>
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      selectedSell.status === 'activo' 
-                        ? 'bg-green-100 text-green-800' 
+                      selectedSell.status === 'activo'
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
                       {selectedSell.status}
                     </span>
                   </div>
                 </div>
-
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Productos</h3>
                   <div className="space-y-2">
                     {selectedSell.productos?.map((producto, index) => (
-                      <div key={index} className="border rounded-lg p-3 bg-gray-50">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium">{producto.nombre}</h4>
-                            <p className="text-sm text-gray-600">
-                              ${producto.precio_unitario} x {producto.cantidad}
-                            </p>
-                            {producto.extraIngredients && producto.extraIngredients.length > 0 && (
-                              <div className="mt-1">
-                                <p className="text-xs text-gray-500">Extras:</p>
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                  {producto.extraIngredients.map(extra => (
-                                    <span key={extra.name} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                                      {extra.icon} {extra.name} x{extra.quantity}
-                                    </span>
-                                  ))}
-                                </div>
+                      <div key={index} className="border rounded-lg p-3 bg-gray-50 flex gap-3 items-center">
+                        <div>
+                          {products.find(prod => prod._id === producto.producto_id && prod.imagen) ? (
+                            <img src={products.find(prod => prod._id === producto.producto_id).imagen} alt={producto.nombre} className="w-10 h-10 rounded-full object-cover border" />
+                          ) : (
+                            <FaBoxOpen className="w-10 h-10 text-gray-400" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium">{producto.nombre}</h4>
+                          <p className="text-sm text-gray-600">
+                            ${producto.precio_unitario} x {producto.cantidad}
+                          </p>
+                          {producto.extraIngredients && producto.extraIngredients.length > 0 && (
+                            <div className="mt-1">
+                              <p className="text-xs text-gray-500">Extras:</p>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {producto.extraIngredients.map(extra => (
+                                  <span key={extra.name} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                                    {extra.icon} {extra.name} x{extra.quantity}
+                                  </span>
+                                ))}
                               </div>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold">${producto.subtotal}</p>
-                          </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold">${producto.subtotal}</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
-
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center text-xl font-bold">
                     <span>Total:</span>
@@ -765,7 +1094,6 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
                   </div>
                 </div>
               </div>
-
               <div className="mt-6">
                 <button
                   onClick={() => setShowViewModal(false)}
@@ -777,8 +1105,8 @@ export default function SellsPage({ setCurrentPage }: { setCurrentPage: (page: s
             </div>
           </div>
         )}
-        
       </div>
     </div>
-  );
-}
+  </div>
+)
+};
