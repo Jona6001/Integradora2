@@ -29,14 +29,15 @@ export const getStockById = async (req: Request, res: Response): Promise<void> =
 // Crear producto de Stock
 export const createStock = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { _id, producto, cantidad, unidad, status } = req.body;
+        const { _id, producto, cantidad, unidad, status, imagen } = req.body;
         const newStock = new Stock({
             _id,
             producto,
             cantidad,
             unidad,
             status: status || "activo",
-            actualizadoEn: new Date()
+            actualizadoEn: new Date(),
+            imagen 
         });
         const stock = await newStock.save();
         res.status(201).json({ message: "Producto de stock creado exitosamente", stock });
@@ -49,12 +50,13 @@ export const createStock = async (req: Request, res: Response): Promise<void> =>
 export const updateStock = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-        const { producto, cantidad, unidad, status } = req.body;
+        const { producto, cantidad, unidad, status, imagen } = req.body; 
         const updateData: any = {};
         if (producto) updateData.producto = producto;
         if (cantidad !== undefined) updateData.cantidad = cantidad;
         if (unidad) updateData.unidad = unidad;
         if (status) updateData.status = status;
+        if (imagen !== undefined) updateData.imagen = imagen; 
         updateData.actualizadoEn = new Date();
 
         const stock = await Stock.findByIdAndUpdate(id, updateData, { new: true });

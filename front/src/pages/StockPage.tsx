@@ -10,6 +10,7 @@ type StockItem = {
   unidad: string;
   status: string;
   actualizadoEn?: string;
+  imagen?: string;
 };
 
 export default function StockPage({ setCurrentPage }) {
@@ -31,6 +32,39 @@ export default function StockPage({ setCurrentPage }) {
     unidad: "piezas",
     status: "activo"
   });
+
+  const [showFillModal, setShowFillModal] = useState(false);
+  const [fillAmount, setFillAmount] = useState(0);
+
+// Función para abrir el modal de rellenar
+const openFillModal = (item) => {
+  setSelectedStock(item);
+  setFillAmount(0);
+  setShowFillModal(true);
+};
+
+// Función para rellenar el stock
+const handleFillStock = async (e) => {
+  e.preventDefault();
+  if (!selectedStock) return;
+  try {
+    const newCantidad = Number(selectedStock.cantidad) + Number(fillAmount);
+    const stockData = {
+      ...selectedStock,
+      cantidad: newCantidad,
+    };
+    await apiService.updateStock(selectedStock._id, stockData);
+    setShowFillModal(false);
+    setSelectedStock(null);
+    setFillAmount(0);
+    loadData();
+    alert('Stock rellenado exitosamente');
+  } catch (error) {
+    console.error('Error rellenando stock:', error);
+    alert('Error al rellenar stock.');
+  }
+};
+
 
   // Detectar tema correctamente (soporta Tailwind y data-theme)
   const [theme, setTheme] = useState(
@@ -111,50 +145,62 @@ export default function StockPage({ setCurrentPage }) {
     setStockAlert("todos");
   };
 
-  const handleCreateStock = async (e) => {
-    e.preventDefault();
-    try {
-      const stockData = {
-        _id: parseInt(String(newStock._id)),
-        producto: newStock.producto,
-        cantidad: parseFloat(String(newStock.cantidad)),
-        unidad: newStock.unidad,
-        status: newStock.status
-      };
-      await apiService.createStock(stockData);
-      setNewStock({ _id: "", producto: "", cantidad: 0, unidad: "piezas", status: "activo" });
-      setShowCreateModal(false);
-      loadData();
-      alert('Producto de stock creado exitosamente');
-    } catch (error) {
-      console.error('Error creando stock:', error);
-      alert('Error al crear producto de stock. Revisa que el ID no esté duplicado.');
-    }
-  };
+const getNextStockId = () => {
+  if (stock.length === 0) return 1;
+  const maxId = Math.max(...stock.map(s => Number(s._id) || 0));
+  return maxId + 1;
+};
 
-  const handleEditStock = async (e) => {
-    e.preventDefault();
-    if (!selectedStock) {
-      alert('No hay producto seleccionado para editar.');
-      return;
-    }
-    try {
-      const stockData = {
-        producto: selectedStock.producto,
-        cantidad: parseFloat(String(selectedStock.cantidad)),
-        unidad: selectedStock.unidad,
-        status: selectedStock.status
-      };
-      await apiService.updateStock(selectedStock._id, stockData);
-      setShowEditModal(false);
-      setSelectedStock(null);
-      loadData();
-      alert('Stock actualizado exitosamente');
-    } catch (error) {
-      console.error('Error actualizando stock:', error);
-      alert('Error al actualizar stock.');
-    }
-  };
+
+const handleCreateStock = async (e) => {
+  e.preventDefault();
+  try {
+    const stockData = {
+      _id: getNextStockId(), // <-- autoincrementa
+      producto: newStock.producto,
+      cantidad: parseFloat(String(newStock.cantidad)),
+      unidad: newStock.unidad,
+      status: "activo",
+      imagen: newStock.imagen
+    };
+    await apiService.createStock(stockData);
+    setNewStock({ _id: "", producto: "", cantidad: 0, unidad: "piezas", status: "activo", imagen: "" });
+    setShowCreateModal(false);
+    loadData();
+    alert('Producto de stock creado exitosamente');
+  } catch (error) {
+    console.error('Error creando stock:', error);
+    alert('Error al crear producto de stock. Revisa que el ID no esté duplicado.');
+  }
+};
+
+
+
+
+const handleEditStock = async (e) => {
+  e.preventDefault();
+  if (!selectedStock) {
+    alert('No hay producto seleccionado para editar.');
+    return;
+  }
+  try {
+    const stockData = {
+      producto: selectedStock.producto,
+      cantidad: parseFloat(String(selectedStock.cantidad)),
+      unidad: selectedStock.unidad,
+      status: selectedStock.status,
+      imagen: selectedStock.imagen // <-- AGREGA ESTA LÍNEA
+    };
+    await apiService.updateStock(selectedStock._id, stockData);
+    setShowEditModal(false);
+    setSelectedStock(null);
+    loadData();
+    alert('Stock actualizado exitosamente');
+  } catch (error) {
+    console.error('Error actualizando stock:', error);
+    alert('Error al actualizar stock.');
+  }
+};
 
   const handleDeleteStock = async () => {
     if (!selectedStock) {
@@ -214,16 +260,18 @@ export default function StockPage({ setCurrentPage }) {
   const inputBg = theme === "dark" ? "bg-slate-900 text-slate-100 border-slate-700" : "bg-white text-gray-900 border-gray-300";
   const inputPlaceholder = theme === "dark" ? "placeholder:text-slate-400" : "placeholder:text-gray-500";
 
-  if (loading) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center ${theme === "dark" ? "bg-gradient-to-br from-slate-900 to-slate-800" : "bg-gradient-to-br from-primary to-secondary"}`}>
-        <div className={`${modalBg} rounded-3xl shadow-2xl p-8`}>
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
-          <p className={`text-center mt-4 font-semibold ${modalTitle}`}>Cargando inventario...</p>
+if (loading) {
+  return (
+    <div className={`min-h-screen flex items-center justify-center ${theme === "dark" ? "bg-gradient-to-br from-slate-900 to-slate-800" : "bg-gradient-to-br from-primary to-secondary"}`}>
+      <div className={`${modalBg} rounded-3xl shadow-2xl p-8`}>
+        <div className="flex flex-col items-center justify-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-400 mb-4"></div>
+          <p className={`text-center mt-4 font-semibold ${modalTitle}`}>Cargando Stock...</p>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className={`min-h-screen ${theme === "dark"
@@ -241,6 +289,9 @@ export default function StockPage({ setCurrentPage }) {
               Control de inventario y productos contables
             </p>
           </div>
+
+          
+
           <button
             onClick={() => setShowCreateModal(true)}
             className={`flex items-center gap-2 ${
@@ -258,7 +309,7 @@ export default function StockPage({ setCurrentPage }) {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {/* Barra de búsqueda */}
             <div className="md:col-span-2">
-              <label className={`block font-semibold mb-2 ${theme === "dark" ? "text-amber-200" : "text-white"}`}>🔍 Buscar en stock</label>
+             <label className={`block font-semibold mb-2 ${theme === "dark" ? "text-amber-200" : "text-gray-800"}`}>🔍 Buscar en stock</label>
               <div className="relative">
                 <input
                   type="text"
@@ -293,7 +344,6 @@ export default function StockPage({ setCurrentPage }) {
             >
               <option value="todos">🌟 Todas</option>
               <option value="piezas">🥤 Piezas</option>
-              <option value="gramos">⚖️ Gramos</option>
             </select>
           </div>
           {/* Filtro por status */}
@@ -330,7 +380,7 @@ export default function StockPage({ setCurrentPage }) {
 
           {/* Resultados y botón limpiar */}
           <div className="flex flex-col sm:flex-row justify-between items-center mt-4 pt-4 border-t border-white/20">
-            <div className={theme === "dark" ? "text-slate-200 mb-2 sm:mb-0" : "text-white/80 mb-2 sm:mb-0"}>
+            <div className={`block font-semibold mb-2 ${theme === "dark" ? "text-amber-200" : "text-gray-800"}`}  >
               <span className="font-semibold">{filteredStock.length}</span> producto{filteredStock.length !== 1 ? 's' : ''} en stock
               {searchTerm && (
                 <span className="ml-2">para "<span className="font-semibold">{searchTerm}</span>"</span>
@@ -350,6 +400,8 @@ export default function StockPage({ setCurrentPage }) {
           </div>
         </div>
 
+
+
         {/* Stock Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStock.map((item, index) => {
@@ -360,6 +412,24 @@ export default function StockPage({ setCurrentPage }) {
               <div key={item._id} className={`${cardBg} ${cardText} rounded-2xl shadow-xl overflow-hidden transform hover:scale-105 transition-all duration-300 ${isCountable ? 'ring-2 ring-blue-300' : ''}`}>
                 <div className="relative h-32 bg-gradient-to-r from-blue-500 to-purple-600">
                   <div className="absolute inset-0 bg-black/20"></div>
+
+                  {/* Imagen centrada */}
+            {item.imagen ? (
+              <img
+                src={item.imagen}
+                alt={item.producto}
+                className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg z-10"
+                style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}
+              />
+            ) : (
+              <div
+                className={`w-20 h-20 flex items-center justify-center rounded-full border-4 border-white shadow-lg z-10 ${theme === "dark" ? "bg-slate-700 text-slate-400" : "bg-gray-100 text-gray-400"}`}
+                style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}
+              >
+                📦
+              </div>
+            )}
+
                   {/* Badges superiores */}
                   <div className="absolute top-4 left-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -391,18 +461,31 @@ export default function StockPage({ setCurrentPage }) {
                     </div>
                   </div>
                 </div>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xl font-bold" style={{ fontFamily: "'Playfair Display', serif" }}>
-                      {item.producto}
-                    </h3>
-                    <span className="text-sm text-gray-500">#{item._id}</span>
-                  </div>
+
+               <div className="p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  {item.imagen ? (
+                    <img
+                      src={item.imagen}
+                      alt={item.producto}
+                      className="w-14 h-14 rounded-full object-cover border"
+                    />
+                  ) : (
+                    <div className={`w-14 h-14 flex items-center justify-center rounded-full ${theme === "dark" ? "bg-slate-700 text-slate-400" : "bg-gray-100 text-gray-400"}`}>
+                      📦
+                    </div>
+                  )}
+                  <h3 className="text-xl font-bold" style={{ fontFamily: "'Playfair Display', serif" }}>
+                    {item.producto}
+                  </h3>
+                  <span className="text-sm text-gray-500">#{item._id}</span>
+                </div>
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-sm text-gray-600">
                       Actualizado: {item.actualizadoEn ? new Date(item.actualizadoEn).toLocaleDateString() : "N/A"}
                     </span>
                   </div>
+
                   <div className="flex gap-2">
                     <button
                       onClick={() => openEditModal(item)}
@@ -410,6 +493,17 @@ export default function StockPage({ setCurrentPage }) {
                     >
                       ✏️ Editar
                     </button>
+
+                      <button
+                    onClick={() => openFillModal(item)}
+                    className="flex-1 bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700 transition font-semibold"
+                    title="Rellenar stock"
+                  >
+                    ♻️ Rellenar
+                  </button>
+
+
+
                     <button
                       onClick={() => openDeleteModal(item)}
                       className="flex-1 bg-red-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-red-600 transition font-semibold"
@@ -417,6 +511,7 @@ export default function StockPage({ setCurrentPage }) {
                       🗑️ Eliminar
                     </button>
                   </div>
+
                 </div>
               </div>
             );
@@ -446,11 +541,12 @@ export default function StockPage({ setCurrentPage }) {
             </div>
           </div>
         )}
+        
 
         {/* Estado vacío cuando no hay stock */}
         {stock.length === 0 && (
           <div className="text-center py-12">
-            <div className={`${theme === "dark" ? "bg-slate-800/80" : "bg-white/90"} backdrop-blur-sm rounded-3xl p-8 inline-block`}>
+            <div className={`block font-semibold mb-2 ${theme === "dark" ? "text-amber-200" : "text-gray-800"}`}>
               <div className="text-6xl mb-4">📦</div>
               <p className={`${theme === "dark" ? "text-slate-100" : "text-gray-800"} text-xl mb-4`}>No hay productos en stock</p>
               <button
@@ -466,169 +562,277 @@ export default function StockPage({ setCurrentPage }) {
           </div>
         )}
 
-        {/* Create Modal */}
-        {showCreateModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className={`${modalBg} rounded-2xl p-8 w-full max-w-md`}>
-              <h2 className={`text-2xl font-bold mb-6 ${modalTitle}`}>Agregar al Stock</h2>
-              <form onSubmit={handleCreateStock}>
-                <div className="mb-4">
-                  <label className="block font-semibold mb-2">ID del Stock</label>
-                  <input
-                    type="number"
-                    value={newStock._id}
-                    onChange={(e) => setNewStock({ ...newStock, _id: e.target.value })}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${inputBg}`}
-                    required
-                    placeholder="Ej: 1, 2, 3..."
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block font-semibold mb-2">Producto</label>
-                  <input
-                    type="text"
-                    value={newStock.producto}
-                    onChange={(e) => setNewStock({ ...newStock, producto: e.target.value })}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${inputBg}`}
-                    required
-                    placeholder="Ej: Agua de Horchata"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block font-semibold mb-2">Cantidad</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={newStock.cantidad}
-                    onChange={(e) => setNewStock({ ...newStock, cantidad: Number(e.target.value) })}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${inputBg}`}
-                    required
-                    placeholder="Ej: 50"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block font-semibold mb-2">Unidad</label>
-                  <select
-                    value={newStock.unidad}
-                    onChange={(e) => setNewStock({ ...newStock, unidad: e.target.value })}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${inputBg}`}
-                    required
-                  >
-                    <option value="piezas">🥤 Piezas (bebidas, productos contables)</option>
-                    <option value="gramos">⚖️ Gramos (ingredientes, condimentos)</option>
-                  </select>
-                </div>
-                <div className="mb-6">
-                  <label className="block font-semibold mb-2">Status</label>
-                  <select
-                    value={newStock.status}
-                    onChange={(e) => setNewStock({ ...newStock, status: e.target.value })}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${inputBg}`}
-                    required
-                  >
-                    <option value="activo">✅ Activo</option>
-                    <option value="inactivo">❌ Inactivo</option>
-                  </select>
-                </div>
-                <div className="flex gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateModal(false)}
-                    className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg font-semibold hover:bg-gray-300 transition"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className={`flex-1 bg-primary text-white py-2 rounded-lg font-semibold hover:bg-secondary transition`}
-                  >
-                    Agregar al Stock
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
 
-        {/* Edit Modal */}
-        {showEditModal && selectedStock && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className={`${modalBg} rounded-2xl p-8 w-full max-w-md`}>
-              <h2 className={`text-2xl font-bold mb-6 ${modalTitle}`}>Editar Stock</h2>
-              <form onSubmit={handleEditStock}>
-                <div className="mb-4">
-                  <label className="block font-semibold mb-2">ID (No editable)</label>
-                  <input
-                    type="number"
-                    value={selectedStock._id}
-                    className={`w-full px-4 py-2 border rounded-lg bg-gray-100 cursor-not-allowed ${inputBg}`}
-                    disabled
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block font-semibold mb-2">Producto</label>
-                  <input
-                    type="text"
-                    value={selectedStock.producto}
-                    onChange={(e) => setSelectedStock({ ...selectedStock, producto: e.target.value })}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${inputBg}`}
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block font-semibold mb-2">Cantidad</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={selectedStock.cantidad}
-                    onChange={(e) => setSelectedStock({ ...selectedStock, cantidad: Number(e.target.value) })}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${inputBg}`}
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block font-semibold mb-2">Unidad</label>
-                  <select
-                    value={selectedStock.unidad}
-                    onChange={(e) => setSelectedStock({ ...selectedStock, unidad: e.target.value })}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${inputBg}`}
-                    required
-                  >
-                    <option value="piezas">🥤 Piezas</option>
-                    <option value="gramos">⚖️ Gramos</option>
-                  </select>
-                </div>
-                <div className="mb-6">
-                  <label className="block font-semibold mb-2">Status</label>
-                  <select
-                    value={selectedStock.status}
-                    onChange={(e) => setSelectedStock({ ...selectedStock, status: e.target.value })}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${inputBg}`}
-                    required
-                  >
-                    <option value="activo">✅ Activo</option>
-                    <option value="inactivo">❌ Inactivo</option>
-                  </select>
-                </div>
-                <div className="flex gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowEditModal(false)}
-                    className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg font-semibold hover:bg-gray-300 transition"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className={`flex-1 bg-blue-500 text-white py-2 rounded-lg font-semibold hover:bg-blue-600 transition`}
-                  >
-                    Actualizar Stock
-                  </button>
-                </div>
-              </form>
+
+        {/* Create Modal */}
+{showCreateModal && (
+  <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50">
+    <div className="w-full flex justify-center min-h-screen">
+      <div className={`${modalBg} rounded-2xl p-0 w-full max-w-2xl flex flex-row shadow-xl mx-2 mt-24 mb-8`}>
+        {/* Panel decorativo izquierdo */}
+        <div className={`hidden md:flex flex-col items-center justify-center px-4 py-8 rounded-l-2xl ${theme === "dark" ? "bg-slate-900" : "bg-primary/90"}`}>
+          <FaPlus className={`text-4xl mb-2 ${theme === "dark" ? "text-amber-400" : "text-white"}`} />
+          <span className={`text-lg font-bold text-center ${theme === "dark" ? "text-amber-200" : "text-white"}`}>Nuevo Stock</span>
+        </div>
+        {/* Formulario a la derecha */}
+        <div className="flex-1 px-4 py-6 text-[18px]">
+          <h2 className={`text-[20px] font-bold mb-3 ${modalTitle}`}>Agregar al Stock</h2>
+          <form onSubmit={handleCreateStock}>
+            <div className="mb-2">
+              <label className="block font-semibold mb-1 text-base">ID del Stock</label>
+              <input
+                type="number"
+                value={getNextStockId()}
+                disabled
+                className={`w-full px-2 py-1 border rounded-lg bg-gray-100 cursor-not-allowed text-base ${inputBg}`}
+                placeholder="ID autogenerado"
+              />
+              <span className="text-xs text-gray-500">El ID se asigna automáticamente</span>
             </div>
-          </div>
-        )}
+            <div className="mb-2">
+              <label className="block font-semibold mb-1 text-base">Producto</label>
+              <input
+                type="text"
+                value={newStock.producto}
+                onChange={(e) => setNewStock({ ...newStock, producto: e.target.value })}
+                className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
+                required
+                placeholder="Ej: Agua de Horchata"
+              />
+            </div>
+            <div className="mb-2">
+              <label className="block font-semibold mb-1 text-base">Cantidad</label>
+              <input
+                type="number"
+                step="0.01"
+                value={newStock.cantidad}
+                onChange={(e) => setNewStock({ ...newStock, cantidad: Number(e.target.value) })}
+                className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
+                required
+                placeholder="Ej: 50"
+              />
+            </div>
+            <div className="mb-2">
+              <label className="block font-semibold mb-1 text-base">Unidad</label>
+              <select
+                value={newStock.unidad}
+                onChange={(e) => setNewStock({ ...newStock, unidad: e.target.value })}
+                className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
+                required
+              >
+                <option value="piezas">🥤 Piezas (bebidas, productos contables)</option>
+              </select>
+            </div>
+            <div className="mb-2">
+              <label className="block font-semibold mb-1 text-base">Imagen</label>
+              <input
+                type="text"
+                value={newStock.imagen || ""}
+                onChange={(e) => setNewStock({ ...newStock, imagen: e.target.value })}
+                className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
+                placeholder="URL de la imagen o /src/assets/stock.png"
+              />
+              {newStock.imagen && (
+                <img src={newStock.imagen} alt="Vista previa" className="w-20 h-20 mt-2 rounded-full object-cover border" />
+              )}
+            </div>
+            <div className="mb-3">
+              <label className="block font-semibold mb-1 text-base">Status</label>
+              <select
+                value={newStock.status}
+                onChange={(e) => setNewStock({ ...newStock, status: e.target.value })}
+                className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
+                required
+              >
+                <option value="activo">✅ Activo</option>
+                <option value="inactivo">❌ Inactivo</option>
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className={`flex-1 bg-gray-200 text-gray-800 py-1 rounded-lg font-semibold hover:bg-gray-300 transition text-base`}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className={`flex-1 bg-primary text-white py-1 rounded-lg font-semibold hover:bg-secondary transition text-base`}
+              >
+                Agregar al Stock
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
+{/* Editar Modal */}
+
+{showEditModal && selectedStock && (
+  <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50">
+    <div className="w-full flex justify-center min-h-screen">
+      <div className={`${modalBg} rounded-1xl p-0 w-full max-w-md flex flex-row shadow-xl mx-5  mt-24 mb-9`}>
+        {/* Panel decorativo izquierdo */}
+        <div className={`hidden md:flex flex-col items-center justify-center px-3 py-6 rounded-l-2xl ${theme === "dark" ? "bg-blue-900" : "bg-blue-100"}`}>
+          <FaPlus className={`text-3xl mb-2 ${theme === "dark" ? "text-blue-300" : "text-blue-700"}`} />
+          <span className={`text-base font-bold text-center ${theme === "dark" ? "text-blue-200" : "text-blue-700"}`}>Editar Stock</span>
+        </div>
+        {/* Formulario a la derecha */}
+        <div className="flex-1 px-3 py-5 text-[15px]">
+          <h2 className={`text-[17px] font-bold mb-2 ${modalTitle}`}>Editar Producto de Stock</h2>
+          <form onSubmit={handleEditStock}>
+            <div className="mb-2">
+              <label className="block font-semibold mb-1 text-base">ID (No editable)</label>
+              <input
+                type="number"
+                value={selectedStock._id}
+                className={`w-full px-2 py-1 border rounded-lg bg-gray-100 cursor-not-allowed text-base ${theme === "dark" ? "bg-slate-900 text-slate-400 border-slate-700" : ""}`}
+                disabled
+              />
+            </div>
+            <div className="mb-2">
+              <label className="block font-semibold mb-1 text-base">Producto</label>
+              <input
+                type="text"
+                value={selectedStock.producto}
+                onChange={(e) => setSelectedStock({ ...selectedStock, producto: e.target.value })}
+                className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
+                required
+              />
+            </div>
+            <div className="mb-2">
+              <label className="block font-semibold mb-1 text-base">Cantidad</label>
+              <input
+                type="number"
+                step="0.01"
+                value={selectedStock.cantidad}
+                onChange={(e) => setSelectedStock({ ...selectedStock, cantidad: Number(e.target.value) })}
+                className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
+                required
+              />
+            </div>
+            <div className="mb-2">
+              <label className="block font-semibold mb-1 text-base">Unidad</label>
+              <select
+                value={selectedStock.unidad}
+                onChange={(e) => setSelectedStock({ ...selectedStock, unidad: e.target.value })}
+                className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
+                required
+              >
+                <option value="piezas">🥤 Piezas</option>
+              </select>
+            </div>
+            <div className="mb-2">
+              <label className="block font-semibold mb-1 text-base">Imagen</label>
+              <input
+                type="text"
+                value={selectedStock.imagen || ""}
+                onChange={(e) => setSelectedStock({ ...selectedStock, imagen: e.target.value })}
+                className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
+                placeholder="URL de la imagen o /src/assets/stock.png"
+              />
+              {selectedStock.imagen && (
+                <img src={selectedStock.imagen} alt="Vista previa" className="w-14 h-14 mt-2 rounded-full object-cover border" />
+              )}
+            </div>
+            <div className="mb-3">
+              <label className="block font-semibold mb-1 text-base">Status</label>
+              <select
+                value={selectedStock.status}
+                onChange={(e) => setSelectedStock({ ...selectedStock, status: e.target.value })}
+                className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
+                required
+              >
+                <option value="activo">✅ Activo</option>
+                <option value="inactivo">❌ Inactivo</option>
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                className={`flex-1 bg-gray-200 text-gray-800 py-1 rounded-lg font-semibold hover:bg-gray-300 transition text-base`}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className={`flex-1 bg-blue-500 text-white py-1 rounded-lg font-semibold hover:bg-blue-600 transition text-base`}
+              >
+                Actualizar Stock
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+        {/* Rellenar Stock Modal */}
+    {showFillModal && selectedStock && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className={`${modalBg} rounded-2xl p-8 w-full max-w-md`}>
+      <h2 className={`text-2xl font-bold mb-6 ${modalTitle}`}>Rellenar Stock</h2>
+      <form onSubmit={handleFillStock}>
+        <div className="mb-4">
+          <label className="block font-semibold mb-2">Producto</label>
+          <input
+            type="text"
+            value={selectedStock.producto}
+            disabled
+            className={`w-full px-4 py-2 border rounded-lg bg-gray-100 cursor-not-allowed ${inputBg}`}
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block font-semibold mb-2">Cantidad actual</label>
+          <input
+            type="number"
+            value={selectedStock.cantidad}
+            disabled
+            className={`w-full px-4 py-2 border rounded-lg bg-gray-100 cursor-not-allowed ${inputBg}`}
+          />
+        </div>
+        <div className="mb-6">
+          <label className="block font-semibold mb-2">¿Cuántas piezas deseas agregar?</label>
+         <input
+  type="number"
+  min={1}
+  value={fillAmount === 0 ? "" : fillAmount}
+  onChange={e => {
+    const val = Number(e.target.value);
+    setFillAmount(isNaN(val) ? 0 : val);
+  }}
+  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${inputBg}`}
+  required
+  placeholder="Ej: 10"
+/>
+        </div>
+        <div className="flex gap-4">
+          <button
+            type="button"
+            onClick={() => setShowFillModal(false)}
+            className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg font-semibold hover:bg-gray-300 transition"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition"
+          >
+            Rellenar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
 
         {/* Delete Modal */}
         {showDeleteModal && selectedStock && (
@@ -660,8 +864,14 @@ export default function StockPage({ setCurrentPage }) {
               </div>
             </div>
           </div>
+
+          
         )}
       </div>
     </div>
   );
 }
+
+
+
+

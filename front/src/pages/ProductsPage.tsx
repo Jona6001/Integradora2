@@ -99,26 +99,34 @@ export default function ProductsPage({ setCurrentPage }) {
     setSelectedStatus("todos");
   };
 
-  const handleCreateProduct = async (e) => {
-    e.preventDefault();
-    try {
-      const productData = {
-        _id: parseInt(String(newProduct._id)),
-        nombre: newProduct.nombre,
-        precio: parseFloat(String(newProduct.precio)),
-        tipo: newProduct.tipo,
-        status: newProduct.status,
-        imagen: newProduct.imagen
-      };
-      await apiService.createProduct(productData);
-      setNewProduct({ _id: "", nombre: "", precio: "", tipo: "torta", status: "activo", imagen: "" });
-      setShowCreateModal(false);
-      loadProducts();
-    } catch (error) {
-      console.error('Error creando producto:', error);
-      alert('Error al crear producto. Revisa que el ID no esté duplicado.');
-    }
-  };
+const getNextProductId = () => {
+  if (products.length === 0) return 1;
+  // Busca el mayor id y suma 1
+  const maxId = Math.max(...products.map(p => Number(p._id) || 0));
+  return maxId + 1;
+};
+
+
+const handleCreateProduct = async (e) => {
+  e.preventDefault();
+  try {
+    const productData = {
+      _id: getNextProductId(), // <-- autoincrementa
+      nombre: newProduct.nombre,
+      precio: parseFloat(String(newProduct.precio)),
+      tipo: newProduct.tipo,
+      status: "activo",
+      imagen: newProduct.imagen
+    };
+    await apiService.createProduct(productData);
+    setNewProduct({ _id: "", nombre: "", precio: "", tipo: "torta", status: "activo", imagen: "" });
+    setShowCreateModal(false);
+    loadProducts();
+  } catch (error) {
+    console.error('Error creando producto:', error);
+    alert('Error al crear producto. Revisa que el ID no esté duplicado.');
+  }
+};
 
   const handleEditProduct = async (e) => {
     e.preventDefault();
@@ -199,16 +207,18 @@ export default function ProductsPage({ setCurrentPage }) {
   const inputBg = theme === "dark" ? "bg-slate-900 text-slate-100 border-slate-700" : "bg-white text-gray-900 border-gray-300";
   const inputPlaceholder = theme === "dark" ? "placeholder:text-slate-400" : "placeholder:text-gray-500";
 
-  if (loading) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center ${theme === "dark" ? "bg-gradient-to-br from-slate-900 to-slate-800" : "bg-gradient-to-br from-primary to-secondary"}`}>
-        <div className={`${modalBg} rounded-3xl shadow-2xl p-8`}>
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
+ if (loading) {
+  return (
+    <div className={`min-h-screen flex items-center justify-center ${theme === "dark" ? "bg-gradient-to-br from-slate-900 to-slate-800" : "bg-gradient-to-br from-primary to-secondary"}`}>
+      <div className={`${modalBg} rounded-3xl shadow-2xl p-8`}>
+        <div className="flex flex-col items-center justify-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-400 mb-4"></div>
           <p className={`text-center mt-4 font-semibold ${modalTitle}`}>Cargando productos...</p>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className={`min-h-screen ${theme === "dark"
@@ -449,120 +459,107 @@ export default function ProductsPage({ setCurrentPage }) {
         {/* Modal para crear producto */}
             
           {showCreateModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50">
-            <div className="w-full flex justify-center min-h-screen">
-              <div className={`${modalBg} rounded-2xl p-0 w-full max-w-2xl flex flex-row shadow-xl mx-2 mt-24 mb-8`}>
-                {/* Panel decorativo izquierdo */}
-                <div className={`hidden md:flex flex-col items-center justify-center px-4 py-8 rounded-l-2xl ${theme === "dark" ? "bg-slate-900" : "bg-primary/90"}`}>
-                  <FaBoxOpen className={`text-4xl mb-2 ${theme === "dark" ? "text-amber-400" : "text-white"}`} />
-                  <span className={`text-lg font-bold text-center ${theme === "dark" ? "text-amber-200" : "text-white"}`}>Nuevo Producto</span>
-                </div>
-
-                {/* Formulario a la derecha */}
-                <div className="flex-1 px-4 py-6 text-[18px]">
-                  <h2 className={`text-[20px] font-bold mb-3 ${modalTitle}`}>Crear Nuevo Producto</h2>
-                  <form onSubmit={handleCreateProduct}>
-                    <div className="mb-2">
-                      <label className="block font-semibold mb-1 text-base flex items-center gap-1">
-                        <FaHashtag className="text-primary" /> ID del Producto
-                      </label>
-                      <input
-                        type="number"
-                        value={newProduct._id}
-                        onChange={(e) => setNewProduct({ ...newProduct, _id: e.target.value })}
-                        className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
-                        required
-                        placeholder="Ej: 1, 2, 3..."
-                      />
-                    </div>
-                    <div className="mb-2">
-                      <label className="block font-semibold mb-1 text-base flex items-center gap-1">
-                        <FaBoxOpen className="text-primary" /> Nombre
-                      </label>
-                      <input
-                        type="text"
-                        value={newProduct.nombre}
-                        onChange={(e) => setNewProduct({ ...newProduct, nombre: e.target.value })}
-                        className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
-                        required
-                        placeholder="Ej: Torta de Jamón"
-                      />
-                    </div>
-                    <div className="mb-2">
-                      <label className="block font-semibold mb-1 text-base flex items-center gap-1">
-                        <FaDollarSign className="text-primary" /> Precio
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={newProduct.precio}
-                        onChange={(e) => setNewProduct({ ...newProduct, precio: e.target.value })}
-                        className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
-                        required
-                        placeholder="Ej: 35.50"
-                      />
-                    </div>
-                    <div className="mb-2">
-                      <label className="block font-semibold mb-1 text-base flex items-center gap-1">
-                        <FaFilter className="text-primary" /> Tipo
-                      </label>
-                      <select
-                        value={newProduct.tipo}
-                        onChange={(e) => setNewProduct({ ...newProduct, tipo: e.target.value })}
-                        className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
-                        required
-                      >
-                        <option value="torta">🥪 Torta</option>
-                        <option value="bebida">🥤 Bebida</option>
-                      </select>
-                    </div>
-                    <div className="mb-2">
-                      <label className="block font-semibold mb-1 text-base flex items-center gap-1">
-                        <FaImage className="text-primary" /> Imagen
-                      </label>
-                      <input
-                        type="text"
-                        value={newProduct.imagen}
-                        onChange={(e) => setNewProduct({ ...newProduct, imagen: e.target.value })}
-                        className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
-                        placeholder="https://ejemplo.com/imagen.jpg o /src/assets/lonches.png"
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="block font-semibold mb-1 text-base flex items-center gap-1">
-                        <FaCheckCircle className="text-primary" /> Status
-                      </label>
-                      <select
-                        value={newProduct.status}
-                        onChange={(e) => setNewProduct({ ...newProduct, status: e.target.value })}
-                        className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
-                        required
-                      >
-                        <option value="activo">✅ Activo</option>
-                        <option value="inactivo">❌ Inactivo</option>
-                      </select>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowCreateModal(false)}
-                        className={`flex-1 bg-gray-200 text-gray-800 py-1 rounded-lg font-semibold hover:bg-gray-300 transition text-base`}
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        type="submit"
-                        className={`flex-1 bg-primary text-white py-1 rounded-lg font-semibold hover:bg-secondary transition text-base`}
-                      >
-                        Crear
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
+  <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50">
+    <div className="w-full flex justify-center min-h-screen">
+      <div className={`${modalBg} rounded-2xl p-0 w-full max-w-2xl flex flex-row shadow-xl mx-2 mt-24 mb-8`}>
+        {/* Panel decorativo izquierdo */}
+        <div className={`hidden md:flex flex-col items-center justify-center px-4 py-8 rounded-l-2xl ${theme === "dark" ? "bg-slate-900" : "bg-primary/90"}`}>
+          <FaBoxOpen className={`text-4xl mb-2 ${theme === "dark" ? "text-amber-400" : "text-white"}`} />
+          <span className={`text-lg font-bold text-center ${theme === "dark" ? "text-amber-200" : "text-white"}`}>Nuevo Producto</span>
+        </div>
+        {/* Formulario a la derecha */}
+        <div className="flex-1 px-4 py-6 text-[18px]">
+          <h2 className={`text-[20px] font-bold mb-3 ${modalTitle}`}>Crear Nuevo Producto</h2>
+          <form onSubmit={handleCreateProduct}>
+            <div className="mb-2">
+              <label className="block font-semibold mb-1 text-base flex items-center gap-1">
+                <FaHashtag className="text-primary" /> ID del Producto
+              </label>
+              <input
+                type="number"
+                value={getNextProductId()}
+                disabled
+                className={`w-full px-2 py-1 border rounded-lg bg-gray-100 cursor-not-allowed text-base ${inputBg}`}
+                placeholder="ID autogenerado"
+              />
+              <span className="text-xs text-gray-500">El ID se asigna automáticamente</span>
             </div>
-          </div>
-        )}
+            {/* ...resto del formulario igual... */}
+            <div className="mb-2">
+              <label className="block font-semibold mb-1 text-base flex items-center gap-1">
+                <FaBoxOpen className="text-primary" /> Nombre
+              </label>
+              <input
+                type="text"
+                value={newProduct.nombre}
+                onChange={(e) => setNewProduct({ ...newProduct, nombre: e.target.value })}
+                className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
+                required
+                placeholder="Ej: Torta de Jamón"
+              />
+            </div>
+            {/* ...resto igual... */}
+            <div className="mb-2">
+              <label className="block font-semibold mb-1 text-base flex items-center gap-1">
+                <FaDollarSign className="text-primary" /> Precio
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={newProduct.precio}
+                onChange={(e) => setNewProduct({ ...newProduct, precio: e.target.value })}
+                className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
+                required
+                placeholder="Ej: 35.50"
+              />
+            </div>
+            <div className="mb-2">
+              <label className="block font-semibold mb-1 text-base flex items-center gap-1">
+                <FaFilter className="text-primary" /> Tipo
+              </label>
+              <select
+                value={newProduct.tipo}
+                onChange={(e) => setNewProduct({ ...newProduct, tipo: e.target.value })}
+                className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
+                required
+              >
+                <option value="torta">🥪 Torta</option>
+                <option value="bebida">🥤 Bebida</option>
+              </select>
+            </div>
+            <div className="mb-2">
+              <label className="block font-semibold mb-1 text-base flex items-center gap-1">
+                <FaImage className="text-primary" /> Imagen
+              </label>
+              <input
+                type="text"
+                value={newProduct.imagen}
+                onChange={(e) => setNewProduct({ ...newProduct, imagen: e.target.value })}
+                className={`w-full px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base ${inputBg}`}
+                placeholder="https://ejemplo.com/imagen.jpg o /src/assets/lonches.png"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className={`flex-1 bg-gray-200 text-gray-800 py-1 rounded-lg font-semibold hover:bg-gray-300 transition text-base`}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className={`flex-1 bg-primary text-white py-1 rounded-lg font-semibold hover:bg-secondary transition text-base`}
+              >
+                Crear
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
 
 

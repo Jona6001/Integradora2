@@ -19,6 +19,15 @@ interface ProfilePageProps {
 }
 
 export default function ProfilePage({ setCurrentPage, user, onUpdateUser }: ProfilePageProps) {
+  // Example: get theme from localStorage, default to 'light'
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme === 'dark' || storedTheme === 'light') {
+      setTheme(storedTheme);
+    }
+  }, []);
+
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
     nombre: '',
@@ -251,382 +260,448 @@ export default function ProfilePage({ setCurrentPage, user, onUpdateUser }: Prof
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4 max-w-6xl">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => setCurrentPage('dashboard')}
-            className="inline-flex items-center gap-2 text-primary hover:text-secondary font-semibold transition-colors mb-4"
-          >
-            <span className="text-lg">←</span>
-            Volver al Dashboard
-          </button>
-          
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-2xl">
-                  {displayUser?.nombre?.charAt(0).toUpperCase()}
+ return (
+  <div className={`min-h-screen py-8 ${theme === 'dark' ? 'bg-slate-900' : 'bg-gray-50'}`}>
+    <div className="container mx-auto px-4 max-w-6xl">
+      {/* Header */}
+      <div className="mb-8">
+        <button
+          onClick={() => setCurrentPage('dashboard')}
+          className={`inline-flex items-center gap-2 font-semibold transition-colors mb-4 ${
+            theme === 'dark'
+              ? 'text-amber-300 hover:text-amber-400'
+              : 'text-primary hover:text-secondary'
+          }`}
+        >
+          <span className="text-lg">←</span>
+          Volver al Dashboard
+        </button>
+        <div className={`rounded-2xl shadow-lg p-6 ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
+          <div className="flex items-center gap-4">
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-r ${
+              theme === 'dark'
+                ? 'from-amber-700 to-orange-700'
+                : 'from-primary to-secondary'
+            }`}>
+              <span className="text-white font-bold text-2xl">
+                {displayUser?.nombre?.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1">
+              <h1
+                className={`text-3xl font-bold mb-2`}
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  color: theme === 'dark' ? '#FFD580' : '#3E2723'
+                }}
+              >
+                {displayUser?.nombre} {displayUser?.apellidos}
+              </h1>
+              <div className="flex flex-wrap items-center gap-4">
+                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
+                  displayUser?.role === 'admin'
+                    ? theme === 'dark'
+                      ? 'bg-red-900 text-red-300'
+                      : 'bg-red-100 text-red-800'
+                    : displayUser?.role === 'gerente'
+                      ? theme === 'dark'
+                        ? 'bg-blue-900 text-blue-300'
+                        : 'bg-blue-100 text-blue-800'
+                      : theme === 'dark'
+                        ? 'bg-green-900 text-green-300'
+                        : 'bg-green-100 text-green-800'
+                }`}>
+                  {displayUser?.role === 'admin' ? '👑' : displayUser?.role === 'gerente' ? '💼' : '👤'}
+                  {displayUser?.role}
+                </span>
+                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
+                  displayUser?.status === 'activo'
+                    ? theme === 'dark'
+                      ? 'bg-green-900 text-green-300'
+                      : 'bg-green-100 text-green-800'
+                    : theme === 'dark'
+                      ? 'bg-red-900 text-red-300'
+                      : 'bg-red-100 text-red-800'
+                }`}>
+                  {displayUser?.status === 'activo' ? '✅' : '❌'}
+                  {displayUser?.status || 'Activo'}
                 </span>
               </div>
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-800 mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
-                  {displayUser?.nombre} {displayUser?.apellidos}
-                </h1>
-                <div className="flex flex-wrap items-center gap-4">
-                  <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
-                    displayUser?.role === 'admin' ? 'bg-red-100 text-red-800' :
-                    displayUser?.role === 'gerente' ? 'bg-blue-100 text-blue-800' :
-                    'bg-green-100 text-green-800'
-                  }`}>
-                    {displayUser?.role === 'admin' ? '👑' : displayUser?.role === 'gerente' ? '💼' : '👤'}
-                    {displayUser?.role}
-                  </span>
-                  <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
-                    displayUser?.status === 'activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {displayUser?.status === 'activo' ? '✅' : '❌'}
-                    {displayUser?.status || 'Activo'}
-                  </span>
-                </div>
-              </div>
-              <div className="text-right text-sm text-gray-500">
-                <p><strong>ID:</strong> {displayUser?._id}</p>
-                <p><strong>Registro:</strong> {displayUser?.creadoEn ? new Date(displayUser.creadoEn).toLocaleDateString('es-ES', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                }) : 'No disponible'}</p>
-              </div>
             </div>
-          </div>
-        </div>
-
-        {/* Message Alert */}
-        {message && (
-          <div className={`mb-6 p-4 rounded-lg border ${
-            messageType === 'success' 
-              ? 'bg-green-50 text-green-700 border-green-200' 
-              : 'bg-red-50 text-red-700 border-red-200'
-          }`}>
-            {message}
-          </div>
-        )}
-
-        {/* Información Completa del Usuario */}
-        <div className="grid lg:grid-cols-3 gap-8 mb-8">
-          {/* Datos Personales */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              👤 Datos Personales
-            </h3>
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 uppercase font-semibold">Nombre Completo</p>
-                <p className="text-lg font-semibold text-gray-800">{displayUser?.nombre} {displayUser?.apellidos}</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 uppercase font-semibold">Usuario</p>
-                <p className="text-lg font-semibold text-gray-800">{displayUser?.nombre}</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 uppercase font-semibold">Rol en el Sistema</p>
-                <p className="text-lg font-semibold text-gray-800 capitalize">{displayUser?.role}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Información de Contacto */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              📞 Contacto
-            </h3>
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 uppercase font-semibold">📧 Correo Electrónico</p>
-                <p className="text-lg font-semibold text-gray-800">{displayUser?.email || 'No registrado'}</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 uppercase font-semibold">📱 Teléfono</p>
-                <p className="text-lg font-semibold text-gray-800">{displayUser?.telefono || 'No registrado'}</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 uppercase font-semibold">🏠 Dirección</p>
-                <p className="text-lg font-semibold text-gray-800">{displayUser?.direccion || 'No registrada'}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Información del Sistema */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              🔧 Sistema
-            </h3>
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 uppercase font-semibold">🆔 ID de Usuario</p>
-                <p className="text-sm font-mono text-gray-800 break-all">{displayUser?._id}</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 uppercase font-semibold">📅 Fecha de Registro</p>
-                <p className="text-lg font-semibold text-gray-800">
-                  {displayUser?.creadoEn ? new Date(displayUser.creadoEn).toLocaleDateString('es-ES', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  }) : 'No disponible'}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {displayUser?.creadoEn ? `a las ${new Date(displayUser.creadoEn).toLocaleTimeString('es-ES')}` : ''}
-                </p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 uppercase font-semibold">🔄 Estado de Cuenta</p>
-                <div className="flex items-center gap-2">
-                  <span className={`w-3 h-3 rounded-full ${
-                    displayUser?.status === 'activo' ? 'bg-green-500' : 'bg-red-500'
-                  }`}></span>
-                  <p className="text-lg font-semibold text-gray-800 capitalize">
-                    {displayUser?.status || 'Activo'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Formulario de Edición */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">
-              ✏️ Editar Información Personal
-            </h2>
-            
-            <form onSubmit={handleUpdateProfile} className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Nombre
-                  </label>
-                  <input
-                    type="text"
-                    name="nombre"
-                    value={formData.nombre}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Apellidos
-                  </label>
-                  <input
-                    type="text"
-                    name="apellidos"
-                    value={formData.apellidos}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  📧 Correo Electrónico
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  📱 Teléfono
-                </label>
-                <input
-                  type="tel"
-                  name="telefono"
-                  value={formData.telefono}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-                  disabled={loading}
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  🏠 Dirección
-                </label>
-                <input
-                  type="text"
-                  name="direccion"
-                  value={formData.direccion}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-                  disabled={loading}
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition flex items-center justify-center"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <span className="animate-spin mr-2 border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>
-                    Actualizando...
-                  </>
-                ) : (
-                  <>
-                    💾 Guardar Cambios
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-
-          {/* Seguridad */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">
-              🔐 Seguridad
-            </h2>
-            
-            {!showPasswordSection ? (
-              <div className="text-center py-8">
-                <div className="text-6xl mb-4">🔒</div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                  Cambiar Contraseña
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Mantén tu cuenta segura actualizando tu contraseña regularmente
-                </p>
-                <button
-                  onClick={() => setShowPasswordSection(true)}
-                  className="bg-yellow-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition"
-                >
-                  🔑 Cambiar Contraseña
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleChangePassword} className="space-y-4">
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    🔒 Contraseña Actual
-                  </label>
-                  <input
-                    type="password"
-                    name="currentPassword"
-                    value={formData.currentPassword}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    🔐 Nueva Contraseña
-                  </label>
-                  <input
-                    type="password"
-                    name="newPassword"
-                    value={formData.newPassword}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-                    required
-                    disabled={loading}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Mínimo 6 caracteres</p>
-                </div>
-
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    🔐 Confirmar Nueva Contraseña
-                  </label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowPasswordSection(false);
-                      setFormData({
-                        ...formData,
-                        currentPassword: '',
-                        newPassword: '',
-                        confirmPassword: ''
-                      });
-                    }}
-                    className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
-                    disabled={loading}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 bg-yellow-500 text-white py-3 rounded-lg font-semibold hover:bg-yellow-600 transition flex items-center justify-center"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <span className="animate-spin mr-2 border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>
-                        Cambiando...
-                      </>
-                    ) : (
-                      <>
-                        🔄 Cambiar Contraseña
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-
-        {/* Información adicional */}
-        <div className="mt-8 bg-blue-50 rounded-2xl p-6 border border-blue-200">
-          <div className="flex items-start gap-3">
-            <div className="text-blue-500 text-2xl">💡</div>
-            <div className="text-blue-700">
-              <h3 className="font-semibold mb-2">Consejos de Seguridad</h3>
-              <ul className="text-sm space-y-1">
-                <li>• Usa una contraseña única y segura</li>
-                <li>• No compartas tus credenciales con otros</li>
-                <li>• Mantén tu información de contacto actualizada</li>
-                <li>• Cierra sesión al terminar de usar el sistema</li>
-              </ul>
+            <div className={`text-right text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>
+              <p><strong>ID:</strong> {displayUser?._id}</p>
+              <p><strong>Registro:</strong> {displayUser?.creadoEn ? new Date(displayUser.creadoEn).toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : 'No disponible'}</p>
             </div>
           </div>
         </div>
       </div>
+
+     
+
+      {/* Información Completa del Usuario */}
+      <div className="grid lg:grid-cols-3 gap-8 mb-8">
+        {/* Datos Personales */}
+        <div className={`rounded-2xl shadow-lg p-6 ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
+          <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${theme === 'dark' ? 'text-amber-300' : 'text-gray-800'}`}>
+            👤 Datos Personales
+          </h3>
+          <div className="space-y-4">
+            <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-slate-900' : 'bg-gray-50'}`}>
+              <p className={`text-sm uppercase font-semibold ${theme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>Nombre Completo</p>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-slate-100' : 'text-gray-800'}`}>{displayUser?.nombre} {displayUser?.apellidos}</p>
+            </div>
+            <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-slate-900' : 'bg-gray-50'}`}>
+              <p className={`text-sm uppercase font-semibold ${theme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>Usuario</p>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-slate-100' : 'text-gray-800'}`}>{displayUser?.nombre}</p>
+            </div>
+            <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-slate-900' : 'bg-gray-50'}`}>
+              <p className={`text-sm uppercase font-semibold ${theme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>Rol en el Sistema</p>
+              <p className={`text-lg font-semibold capitalize ${theme === 'dark' ? 'text-slate-100' : 'text-gray-800'}`}>{displayUser?.role}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Información de Contacto */}
+        <div className={`rounded-2xl shadow-lg p-6 ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
+          <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${theme === 'dark' ? 'text-amber-300' : 'text-gray-800'}`}>
+            📞 Contacto
+          </h3>
+          <div className="space-y-4">
+            <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-slate-900' : 'bg-gray-50'}`}>
+              <p className={`text-sm uppercase font-semibold ${theme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>📧 Correo Electrónico</p>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-slate-100' : 'text-gray-800'}`}>{displayUser?.email || 'No registrado'}</p>
+            </div>
+            <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-slate-900' : 'bg-gray-50'}`}>
+              <p className={`text-sm uppercase font-semibold ${theme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>📱 Teléfono</p>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-slate-100' : 'text-gray-800'}`}>{displayUser?.telefono || 'No registrado'}</p>
+            </div>
+            <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-slate-900' : 'bg-gray-50'}`}>
+              <p className={`text-sm uppercase font-semibold ${theme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>🏠 Dirección</p>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-slate-100' : 'text-gray-800'}`}>{displayUser?.direccion || 'No registrada'}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Información del Sistema */}
+        <div className={`rounded-2xl shadow-lg p-6 ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
+          <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${theme === 'dark' ? 'text-amber-300' : 'text-gray-800'}`}>
+            🔧 Sistema
+          </h3>
+          <div className="space-y-4">
+            <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-slate-900' : 'bg-gray-50'}`}>
+              <p className={`text-sm uppercase font-semibold ${theme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>🆔 ID de Usuario</p>
+              <p className={`text-sm font-mono break-all ${theme === 'dark' ? 'text-slate-100' : 'text-gray-800'}`}>{displayUser?._id}</p>
+            </div>
+            <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-slate-900' : 'bg-gray-50'}`}>
+              <p className={`text-sm uppercase font-semibold ${theme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>📅 Fecha de Registro</p>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-slate-100' : 'text-gray-800'}`}>
+                {displayUser?.creadoEn ? new Date(displayUser.creadoEn).toLocaleDateString('es-ES', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                }) : 'No disponible'}
+              </p>
+              <p className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>
+                {displayUser?.creadoEn ? `a las ${new Date(displayUser.creadoEn).toLocaleTimeString('es-ES')}` : ''}
+              </p>
+            </div>
+            <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-slate-900' : 'bg-gray-50'}`}>
+              <p className={`text-sm uppercase font-semibold ${theme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>🔄 Estado de Cuenta</p>
+              <div className="flex items-center gap-2">
+                <span className={`w-3 h-3 rounded-full ${
+                  displayUser?.status === 'activo'
+                    ? theme === 'dark' ? 'bg-green-400' : 'bg-green-500'
+                    : theme === 'dark' ? 'bg-red-400' : 'bg-red-500'
+                }`}></span>
+                <p className={`text-lg font-semibold capitalize ${theme === 'dark' ? 'text-slate-100' : 'text-gray-800'}`}>
+                  {displayUser?.status || 'Activo'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-8">
+        {/* Formulario de Edición */}
+        <div className={`rounded-2xl shadow-lg p-6 ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
+          <h2 className={`text-2xl font-bold mb-6 ${theme === 'dark' ? 'text-amber-300' : 'text-gray-800'}`}>
+            ✏️ Editar Información Personal
+          </h2>
+          <form onSubmit={handleUpdateProfile} className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className={`block font-semibold mb-2 ${theme === 'dark' ? 'text-slate-200' : 'text-gray-700'}`}>
+                  Nombre
+                </label>
+                <input
+                  type="text"
+                  name="nombre"
+                  value={formData.nombre}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all
+                    ${theme === 'dark'
+                      ? 'bg-slate-900 text-slate-100 border-slate-700 placeholder:text-slate-400'
+                      : 'bg-white text-black border-gray-300 placeholder:text-gray-500'}
+                  `}
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div>
+                <label className={`block font-semibold mb-2 ${theme === 'dark' ? 'text-slate-200' : 'text-gray-700'}`}>
+                  Apellidos
+                </label>
+                <input
+                  type="text"
+                  name="apellidos"
+                  value={formData.apellidos}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all
+                    ${theme === 'dark'
+                      ? 'bg-slate-900 text-slate-100 border-slate-700 placeholder:text-slate-400'
+                      : 'bg-white text-black border-gray-300 placeholder:text-gray-500'}
+                  `}
+                  required
+                  disabled={loading}
+                />
+              </div>
+            </div>
+            <div>
+              <label className={`block font-semibold mb-2 ${theme === 'dark' ? 'text-slate-200' : 'text-gray-700'}`}>
+                📧 Correo Electrónico
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all
+                  ${theme === 'dark'
+                    ? 'bg-slate-900 text-slate-100 border-slate-700 placeholder:text-slate-400'
+                    : 'bg-white text-black border-gray-300 placeholder:text-gray-500'}
+                `}
+                required
+                disabled={loading}
+              />
+            </div>
+            <div>
+              <label className={`block font-semibold mb-2 ${theme === 'dark' ? 'text-slate-200' : 'text-gray-700'}`}>
+                📱 Teléfono
+              </label>
+              <input
+                type="tel"
+                name="telefono"
+                value={formData.telefono}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all
+                  ${theme === 'dark'
+                    ? 'bg-slate-900 text-slate-100 border-slate-700 placeholder:text-slate-400'
+                    : 'bg-white text-black border-gray-300 placeholder:text-gray-500'}
+                `}
+                disabled={loading}
+              />
+            </div>
+            <div>
+              <label className={`block font-semibold mb-2 ${theme === 'dark' ? 'text-slate-200' : 'text-gray-700'}`}>
+                🏠 Dirección
+              </label>
+              <input
+                type="text"
+                name="direccion"
+                value={formData.direccion}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all
+                  ${theme === 'dark'
+                    ? 'bg-slate-900 text-slate-100 border-slate-700 placeholder:text-slate-400'
+                    : 'bg-white text-black border-gray-300 placeholder:text-gray-500'}
+                `}
+                disabled={loading}
+              />
+            </div>
+            <button
+              type="submit"
+              className={`w-full py-3 rounded-lg font-semibold transition flex items-center justify-center
+                ${theme === 'dark'
+                  ? 'bg-primary text-white hover:bg-secondary'
+                  : 'bg-primary text-white hover:bg-secondary'}
+              `}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="animate-spin mr-2 border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>
+                  Actualizando...
+                </>
+              ) : (
+                <>
+                  💾 Guardar Cambios
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Seguridad */}
+        <div className={`rounded-2xl shadow-lg p-6 ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
+          <h2 className={`text-2xl font-bold mb-6 ${theme === 'dark' ? 'text-amber-300' : 'text-gray-800'}`}>
+            🔐 Seguridad
+          </h2>
+          {!showPasswordSection ? (
+            <div className="text-center py-8">
+              <div className="text-6xl mb-4">🔒</div>
+              <h3 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-slate-100' : 'text-gray-800'}`}>
+                Cambiar Contraseña
+              </h3>
+              <p className={`mb-6 ${theme === 'dark' ? 'text-slate-400' : 'text-gray-600'}`}>
+                Mantén tu cuenta segura actualizando tu contraseña regularmente
+              </p>
+              <button
+                onClick={() => setShowPasswordSection(true)}
+                className="bg-yellow-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition"
+              >
+                🔑 Cambiar Contraseña
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                 {/* Message Alert */}
+      {message && (
+        <div className={`mb-6 p-4 rounded-lg border ${
+          messageType === 'success'
+            ? theme === 'dark'
+              ? 'bg-green-900/20 text-green-300 border-green-700'
+              : 'bg-green-50 text-green-700 border-green-200'
+            : theme === 'dark'
+              ? 'bg-red-900/20 text-red-300 border-red-700'
+              : 'bg-red-50 text-red-700 border-red-200'
+        }`}>
+          {message}
+        </div>
+      )}
+                <label className={`block font-semibold mb-2 ${theme === 'dark' ? 'text-slate-200' : 'text-gray-700'}`}>
+                  🔒 Contraseña Actual
+                </label>
+                <input
+                  type="password"
+                  name="currentPassword"
+                  value={formData.currentPassword}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all
+                    ${theme === 'dark'
+                      ? 'bg-slate-900 text-slate-100 border-slate-700 placeholder:text-slate-400'
+                      : 'bg-white text-black border-gray-300 placeholder:text-gray-500'}
+                  `}
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div>
+                <label className={`block font-semibold mb-2 ${theme === 'dark' ? 'text-slate-200' : 'text-gray-700'}`}>
+                  🔐 Nueva Contraseña
+                </label>
+                <input
+                  type="password"
+                  name="newPassword"
+                  value={formData.newPassword}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all
+                    ${theme === 'dark'
+                      ? 'bg-slate-900 text-slate-100 border-slate-700 placeholder:text-slate-400'
+                      : 'bg-white text-black border-gray-300 placeholder:text-gray-500'}
+                  `}
+                  required
+                  disabled={loading}
+                />
+                <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>Mínimo 6 caracteres</p>
+              </div>
+              <div>
+                <label className={`block font-semibold mb-2 ${theme === 'dark' ? 'text-slate-200' : 'text-gray-700'}`}>
+                  🔐 Confirmar Nueva Contraseña
+                </label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all
+                    ${theme === 'dark'
+                      ? 'bg-slate-900 text-slate-100 border-slate-700 placeholder:text-slate-400'
+                      : 'bg-white text-black border-gray-300 placeholder:text-gray-500'}
+                  `}
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordSection(false);
+                    setFormData({
+                      ...formData,
+                      currentPassword: '',
+                      newPassword: '',
+                      confirmPassword: ''
+                    });
+                  }}
+                  className={`flex-1 py-3 rounded-lg font-semibold transition
+                    ${theme === 'dark'
+                      ? 'bg-slate-700 text-slate-100 hover:bg-slate-600'
+                      : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}
+                  `}
+                  disabled={loading}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-yellow-500 text-white py-3 rounded-lg font-semibold hover:bg-yellow-600 transition flex items-center justify-center"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <span className="animate-spin mr-2 border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>
+                      Cambiando...
+                    </>
+                  ) : (
+                    <>
+                      🔄 Cambiar Contraseña
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+
+      {/* Información adicional */}
+      <div className={`mt-8 rounded-2xl p-6 border flex items-start gap-3
+        ${theme === 'dark'
+          ? 'bg-blue-950 border-blue-900'
+          : 'bg-blue-50 border-blue-200'}
+      `}>
+        <div className="text-blue-500 text-2xl">💡</div>
+        <div className={`${theme === 'dark' ? 'text-blue-200' : 'text-blue-700'}`}>
+          <h3 className="font-semibold mb-2">Consejos de Seguridad</h3>
+          <ul className="text-sm space-y-1">
+            <li>• Usa una contraseña única y segura</li>
+            <li>• No compartas tus credenciales con otros</li>
+            <li>• Mantén tu información de contacto actualizada</li>
+            <li>• Cierra sesión al terminar de usar el sistema</li>
+          </ul>
+        </div>
+      </div>
     </div>
-  );
+  </div>
+);
 }

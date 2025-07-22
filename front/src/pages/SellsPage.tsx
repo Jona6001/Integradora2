@@ -395,16 +395,21 @@ const getUserName = (id) => {
     return 'otro';
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
-          <p className="text-center mt-4 text-primary font-semibold">Cargando ventas...</p>
+// Mejor contraste para modo claro900 border-gray-300";
+
+
+if (loading) {
+  return (
+    <div className={`min-h-screen flex items-center justify-center ${theme === "dark" ? "bg-gradient-to-br from-slate-900 to-slate-800" : "bg-gradient-to-br from-primary to-secondary"}`}>
+      <div className={`${modalBg} rounded-3xl shadow-2xl p-8`}>
+        <div className="flex flex-col items-center justify-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-400 mb-4"></div>
+          <p className={`text-center mt-4 font-semibold ${modalTitle}`}>Cargando ventas...</p>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
   <div className={`min-h-screen ${theme === "dark"
@@ -437,7 +442,7 @@ const getUserName = (id) => {
         <FaShoppingCart /> Agregar Venta
       </button>
         </div>
-        <div className="overflow-x-auto mb-10 mt-6">
+        <div className="overflow-x-auto mb-10 mt-8">
           <div className={`rounded-2xl shadow-xl overflow-hidden ${theme === "dark" ? "bg-slate-800 border border-slate-700" : "bg-white border border-gray-200"}`}>
             <div className={`text-right font-medium text-xl px-6 pt-4 ${theme === "dark" ? "text-amber-200" : "text-primary"}`}>
               {currentTime.toLocaleTimeString('es-MX', {
@@ -454,8 +459,8 @@ const getUserName = (id) => {
                 })}
               </div>
             </div>
-<table className="w-full mt-2">
-  <thead className={`${theme === "dark" ? "bg-slate-900 text-amber-100" : "bg-primary text-white"}`}>
+<table className="w-full mt-8">
+  <thead className={`${theme === "dark" ? "bg-slate-600 text-amber-100" : "bg-primary text-white"}`}>
     <tr>
       <th className="px-6 py-4 text-left"><FaCalendarAlt className="inline mr-1" />Fecha</th>
       <th className="px-6 py-4 text-left"><FaShoppingCart className="inline mr-1" />Productos</th>
@@ -476,7 +481,6 @@ const getUserName = (id) => {
           transition-colors
         `}
       >
-        {/* Ya no mostramos el ID */}
         <td className="px-6 py-4">
           {new Date(sell.fecha).toLocaleDateString('es-MX', {
             year: 'numeric',
@@ -595,424 +599,469 @@ const getUserName = (id) => {
             </div>
           </div>
         )}
-        {showCreateModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className={`${theme === "dark" ? "bg-slate-800 border border-slate-700" : "bg-white border border-gray-200"} rounded-2xl p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto`}>
-              <h2 className={`text-2xl font-bold mb-6 flex items-center gap-2 ${theme === "dark" ? "text-amber-400" : "text-primary"}`}><FaShoppingCart /> Nueva Venta</h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Productos Disponibles</h3>
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {products.map(product => {
-                      const productType = getProductType(product.nombre);
-                      const requiredIngredients = getRequiredIngredients(product.nombre, 1);
-                      let canMake = true;
-                      let stockInfo = "";
-                      if (requiredIngredients.length > 0) {
-                        for (const { ingredient, required } of requiredIngredients) {
-                          const available = getAvailableStock(ingredient);
-                          if (available < required) {
-                            canMake = false;
-                          }
-                          stockInfo += `${ingredient}: ${available} `;
+
+{showCreateModal && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className={`${modalBg} rounded-2xl p-0 w-full max-w-5xl flex flex-col shadow-xl mt-24`}>
+      {/* Título arriba, fuera del panel lateral */}
+      <div className="flex items-center gap-4 px-8 pt-8 pb-2 border-b">
+        <FaShoppingCart className={`text-4xl ${theme === "dark" ? "text-amber-400" : "text-primary"}`} />
+        <h2 className={`text-2xl font-bold ${modalTitle}`}>Crear Nueva Venta</h2>
+      </div>
+      <div className="flex flex-row w-full">
+       
+        {/* Formulario a la derecha, más ancho */}
+        <div className="flex-1 px-8 py-8 text-[17px] overflow-y-auto max-h-[80vh]">
+          <form onSubmit={handleCreateSale}>
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-10">
+              {/* Productos disponibles */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Productos Disponibles</h3>
+                <div className="space-y-3 max-h-72 overflow-y-auto">
+                  {products.map(product => {
+                    const productType = getProductType(product.nombre);
+                    const requiredIngredients = getRequiredIngredients(product.nombre, 1);
+                    let canMake = true;
+                    let stockInfo = "";
+                    if (requiredIngredients.length > 0) {
+                      for (const { ingredient, required } of requiredIngredients) {
+                        const available = getAvailableStock(ingredient);
+                        if (available < required) {
+                          canMake = false;
                         }
+                        stockInfo += `${ingredient}: ${available} `;
                       }
-                      return (
-                        <div key={product._id} className={`border rounded-lg p-3 flex gap-3 items-center ${!canMake ? 'bg-red-50 border-red-200' : ''}`}>
-                          <div>
-                            {product.imagen ? (
-                              <img src={product.imagen} alt={product.nombre} className="w-14 h-14 rounded-full object-cover border" />
-                            ) : (
-                              <FaBoxOpen className="w-14 h-14 text-gray-400" />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-medium">{product.nombre}</h4>
-                              <span className={`px-2 py-1 rounded-full text-xs ${
-                                productType === 'torta' ? 'bg-orange-100 text-orange-800' :
-                                productType === 'bebida' ? 'bg-blue-100 text-blue-800' :
-                                productType === 'pan' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {productType === 'torta' ? '🌮' :
-                                  productType === 'bebida' ? '🥤' :
-                                    productType === 'pan' ? '🍞' : '📦'} {productType}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-600 mb-1">
-                              ${product.precio} - {product.tipo}
-                            </p>
-                            {requiredIngredients.length > 0 && (
-                              <div className="text-xs text-gray-500">
-                                <span className="font-medium">Requiere: </span>
-                                {stockInfo}
-                                {!canMake && <span className="text-red-500 font-medium">⚠️ Sin stock</span>}
-                              </div>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => addToCart(product._id)}
-                            disabled={!canMake}
-                            className={`px-3 py-1 rounded text-sm transition ${
-                              !canMake
-                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : 'bg-primary text-white hover:bg-secondary'
-                            }`}
-                          >
-                            + Agregar
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Carrito de Compra</h3>
-                  {cart.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <div className="text-4xl mb-2"><FaShoppingCart /></div>
-                      <p>Carrito vacío</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
-                      {cart.map(item => {
-                        const requiredIngredients = getRequiredIngredients(item.nombre, item.cantidad);
-                        function updateCartQuantity(producto_id: number, newQuantity: number): void {
-                          if (newQuantity < 1) {
-                            setCart(cart.filter(item => item.producto_id !== producto_id));
-                            return;
-                          }
-                          setCart(cart.map(item => {
-                            if (item.producto_id === producto_id) {
-                              const extraCost = (item.extraIngredients ?? []).reduce(
-                                (sum, extra) => sum + (extra.price * extra.quantity * newQuantity),
-                                0
-                              );
-                              return {
-                                ...item,
-                                cantidad: newQuantity,
-                                subtotal: (newQuantity * item.precio_unitario) + extraCost
-                              };
-                            }
-                            return item;
-                          }));
-                        }
-                        return (
-                          <div key={item.producto_id} className="border rounded-lg p-4 flex gap-3 items-center">
-                            <div>
-                              {item.imagen ? (
-                                <img src={item.imagen} alt={item.nombre} className="w-12 h-12 rounded-full object-cover border" />
-                              ) : (
-                                <FaBoxOpen className="w-12 h-12 text-gray-400" />
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-medium">{item.nombre}</h4>
-                                {requiredIngredients.length > 0 && (
-                                  <div className="text-xs text-gray-500">
-                                    <span className="font-medium">Usa: </span>
-                                    {requiredIngredients.map(({ ingredient, required }) => (
-                                      <span key={ingredient}>{ingredient} ({required}) </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                                                           <div className="flex items-center gap-2 mb-2">
-                                <button
-                                  onClick={() => updateCartQuantity(item.producto_id, item.cantidad - 1)}
-                                  className={`w-6 h-6 rounded flex items-center justify-center font-bold transition
-                                    ${theme === "dark"
-                                      ? "bg-slate-700 text-amber-300 hover:bg-amber-500 hover:text-white border border-slate-600"
-                                      : "bg-gray-200 text-gray-800 hover:bg-primary hover:text-white"}
-                                  `}
-                                >
-                                  -
-                                </button>
-                                <span className="w-8 text-center">{item.cantidad}</span>
-                                <button
-                                  onClick={() => updateCartQuantity(item.producto_id, item.cantidad + 1)}
-                                  className={`w-6 h-6 rounded flex items-center justify-center font-bold transition
-                                    ${theme === "dark"
-                                      ? "bg-slate-700 text-amber-300 hover:bg-amber-500 hover:text-white border border-slate-600"
-                                      : "bg-gray-200 text-gray-800 hover:bg-primary hover:text-white"}
-                                  `}
-                                >
-                                  +
-                                </button>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-sm text-gray-600">${item.precio_unitario} base</p>
-                                <p className="font-bold">${item.subtotal}</p>
-                              </div>
-                              {item.isTorta && (
-                                <div className="border-t pt-3">
-                                  <h5 className="text-sm font-semibold mb-2">🌶️ Ingredientes Extra (+$5 c/u)</h5>
-                                  {item.extraIngredients && item.extraIngredients.length > 0 && (
-                                    <div className="mb-2">
-                                      <div className="flex flex-wrap gap-1 mb-2">
-                                        {item.extraIngredients.map(extra => (
-                                          <span key={extra.name} className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
-                                            {extra.icon} {extra.name} x{extra.quantity}
-                                              <button
-                                                onClick={() => removeExtraIngredient(item.producto_id, extra.name)}
-                                                className={`ml-1 font-bold rounded-full transition
-                                                  ${theme === "dark"
-                                                    ? "bg-red-700 text-white hover:bg-red-500 border border-red-800"
-                                                    : "text-red-500 hover:text-red-700"}
-                                                `}
-                                              >
-                                                ✕
-                                              </button>
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                  <div className="grid grid-cols-3 gap-1">
-                                    {EXTRA_INGREDIENTS.map(ingredient => (
-                                      <button
-                                        key={ingredient.name}
-                                        onClick={() => addExtraIngredient(item.producto_id, ingredient)}
-                                        className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-100 transition border border-blue-200"
-                                        title={`Agregar ${ingredient.name} (+$${ingredient.price})`}
-                                      >
-                                        {ingredient.icon} {ingredient.name}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                      <div className="border-t pt-3 mt-3">
-                        <div className="flex justify-between items-center text-lg font-bold">
-                          <span>Total:</span>
-                          <span className="text-green-600">${calculateTotal()}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex gap-4 mt-6">
-                <button
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setCart([]);
-                  }}
-                  className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleCreateSale}
-                  disabled={cart.length === 0}
-                  className="flex-1 bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                  Completar Venta (${calculateTotal()})
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {showEditModal && selectedSell && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className={`${theme === "dark" ? "bg-slate-800 border border-slate-700" : "bg-white border border-gray-200"} rounded-2xl p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto`}>
-              <h2 className={`text-2xl font-bold mb-6 flex items-center gap-2 ${theme === "dark" ? "text-yellow-400" : "text-yellow-600"}`}><FaEdit /> Editar Venta</h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Productos en Venta</h3>
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {editCart.map(item => (
-                      <div key={item.producto_id} className="border rounded-lg p-4 flex gap-3 items-center">
-                        <div>
-                          {item.imagen ? (
-                            <img src={item.imagen} alt={item.nombre} className="w-12 h-12 rounded-full object-cover border" />
-                          ) : (
-                            <FaBoxOpen className="w-12 h-12 text-gray-400" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-medium">{item.nombre}</h4>
-                          </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <button
-                              onClick={() => setEditCart(editCart.map(i => i.producto_id === item.producto_id ? { ...i, cantidad: Math.max(1, i.cantidad - 1), subtotal: (Math.max(1, i.cantidad - 1) * i.precio_unitario) } : i))}
-                              className="bg-gray-200 w-6 h-6 rounded flex items-center justify-center"
-                            >
-                              -
-                            </button>
-                            <span className="w-8 text-center">{item.cantidad}</span>
-                            <button
-                              onClick={() => setEditCart(editCart.map(i => i.producto_id === item.producto_id ? { ...i, cantidad: i.cantidad + 1, subtotal: ((i.cantidad + 1) * i.precio_unitario) } : i))}
-                              className="bg-gray-200 w-6 h-6 rounded flex items-center justify-center"
-                            >
-                              +
-                            </button>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm text-gray-600">${item.precio_unitario} base</p>
-                            <p className="font-bold">${item.subtotal}</p>
-                          </div>
-                        </div>
-                        {item.isTorta && (
-                          <div className="border-t pt-3">
-                            <h5 className="text-sm font-semibold mb-2">🌶️ Ingredientes Extra (+$5 c/u)</h5>
-                            {item.extraIngredients && item.extraIngredients.length > 0 && (
-                              <div className="mb-2">
-                                <div className="flex flex-wrap gap-1 mb-2">
-                                  {item.extraIngredients.map(extra => (
-                                    <span key={extra.name} className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
-                                      {extra.icon} {extra.name} x{extra.quantity}
-                                      <button
-                                        onClick={() => {
-                                          setEditCart(editCart.map(i =>
-                                            i.producto_id === item.producto_id
-                                              ? {
-                                                  ...i,
-                                                  extraIngredients: (i.extraIngredients ?? [])
-                                                    .map(e =>
-                                                      e.name === extra.name
-                                                        ? { ...e, quantity: Math.max(0, e.quantity - 1) }
-                                                        : e
-                                                    )
-                                                    .filter(e => e.quantity > 0),
-                                                  subtotal:
-                                                    (i.cantidad * i.precio_unitario) +
-                                                    ((i.extraIngredients ?? [])
-                                                      .map(e =>
-                                                        e.name === extra.name
-                                                          ? { ...e, quantity: Math.max(0, e.quantity - 1) }
-                                                          : e
-                                                      )
-                                                      .filter(e => e.quantity > 0)
-                                                      .reduce((sum, e) => sum + (e.price * e.quantity * i.cantidad), 0))
-                                                }
-                                              : i
-                                          ));
-                                        }}
-                                        className="text-red-500 hover:text-red-700 ml-1"
-                                      >
-                                        ✕
-                                      </button>
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            <div className="grid grid-cols-3 gap-1">
-                              {EXTRA_INGREDIENTS.map(ingredient => (
-                                <button
-                                  key={ingredient.name}
-                                  onClick={() => {
-                                    setEditCart(editCart.map(i => {
-                                      if (i.producto_id === item.producto_id) {
-                                        const existingExtra = i.extraIngredients?.find(e => e.name === ingredient.name);
-                                        let updatedExtras;
-                                        if (existingExtra) {
-                                          updatedExtras = (i.extraIngredients ?? []).map(e =>
-                                            e.name === ingredient.name
-                                              ? { ...e, quantity: e.quantity + 1 }
-                                              : e
-                                          );
-                                        } else {
-                                          updatedExtras = [...(i.extraIngredients || []), { ...ingredient, quantity: 1 }];
-                                        }
-                                        const extraCost = updatedExtras.reduce((sum, e) => sum + (e.price * e.quantity * i.cantidad), 0);
-                                        return {
-                                          ...i,
-                                          extraIngredients: updatedExtras,
-                                          subtotal: (i.cantidad * i.precio_unitario) + extraCost
-                                        };
-                                      }
-                                      return i;
-                                    }));
-                                  }}
-                                  className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-100 transition border border-blue-200"
-                                  title={`Agregar ${ingredient.name} (+$${ingredient.price})`}
-                                >
-                                  {ingredient.icon} {ingredient.name}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        <button
-                          onClick={() => setEditCart(editCart.filter(i => i.producto_id !== item.producto_id))}
-                          className="text-red-500 hover:text-red-700 ml-1"
-                        >
-                          <FaTrash />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Agregar Productos</h3>
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {products.map(product => (
-                      <div key={product._id} className="border rounded-lg p-3 flex gap-3 items-center">
+                    }
+                    return (
+                      <div key={product._id} className={`border rounded-lg p-3 flex gap-3 items-center ${!canMake ? 'bg-red-50 border-red-200' : ''}`}>
                         <div>
                           {product.imagen ? (
-                            <img src={product.imagen} alt={product.nombre} className="w-12 h-12 rounded-full object-cover border" />
+                            <img src={product.imagen} alt={product.nombre} className="w-14 h-14 rounded-full object-cover border" />
                           ) : (
-                            <FaBoxOpen className="w-12 h-12 text-gray-400" />
+                            <FaBoxOpen className="w-14 h-14 text-gray-400" />
                           )}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <h4 className="font-medium">{product.nombre}</h4>
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              productType === 'torta' ? 'bg-orange-100 text-orange-800' :
+                              productType === 'bebida' ? 'bg-blue-100 text-blue-800' :
+                              productType === 'pan' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {productType === 'torta' ? '🌮' :
+                                productType === 'bebida' ? '🥤' :
+                                  productType === 'pan' ? '🍞' : '📦'} {productType}
+                            </span>
                           </div>
                           <p className="text-sm text-gray-600 mb-1">
                             ${product.precio} - {product.tipo}
                           </p>
+                          {requiredIngredients.length > 0 && (
+                            <div className="text-xs text-gray-500">
+                              <span className="font-medium">Requiere: </span>
+                              {stockInfo}
+                              {!canMake && <span className="text-red-500 font-medium">⚠️ Sin stock</span>}
+                            </div>
+                          )}
                         </div>
                         <button
-                          onClick={() => {
-                            if (!editCart.find(i => i.producto_id === product._id)) {
-                              setEditCart([...editCart, {
-                                producto_id: product._id,
-                                nombre: product.nombre,
-                                cantidad: 1,
-                                precio_unitario: product.precio,
-                                subtotal: product.precio,
-                                imagen: product.imagen,
-                                extraIngredients: [],
-                                isTorta: isTorta(product.nombre)
-                              }]);
-                            }
-                          }}
-                          className="px-3 py-1 rounded text-sm bg-primary text-white hover:bg-secondary"
+                          type="button"
+                          onClick={() => addToCart(product._id)}
+                          disabled={!canMake}
+                          className={`px-3 py-1 rounded text-sm transition ${
+                            !canMake
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              : 'bg-primary text-white hover:bg-secondary'
+                          }`}
                         >
                           + Agregar
                         </button>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
-              <div className="flex gap-4 mt-6">
-                <button
-                  onClick={() => setShowEditModal(false)}
-                  className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleEditSell}
-                  className="flex-1 bg-yellow-500 text-white py-3 rounded-lg font-semibold hover:bg-yellow-600 transition"
-                >
-                  Guardar Cambios
-                </button>
+              {/* Carrito de compra */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Carrito de Compra</h3>
+                {cart.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <div className="text-4xl mb-2"><FaShoppingCart /></div>
+                    <p>Carrito vacío</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-72 overflow-y-auto">
+                    {cart.map(item => {
+                      const requiredIngredients = getRequiredIngredients(item.nombre, item.cantidad);
+                      function updateCartQuantity(producto_id: number, newQuantity: number): void {
+                        if (newQuantity < 1) {
+                          setCart(cart.filter(item => item.producto_id !== producto_id));
+                          return;
+                        }
+                        setCart(cart.map(item => {
+                          if (item.producto_id === producto_id) {
+                            const extraCost = (item.extraIngredients ?? []).reduce(
+                              (sum, extra) => sum + (extra.price * extra.quantity * newQuantity),
+                              0
+                            );
+                            return {
+                              ...item,
+                              cantidad: newQuantity,
+                              subtotal: (newQuantity * item.precio_unitario) + extraCost
+                            };
+                          }
+                          return item;
+                        }));
+                      }
+                      return (
+                        <div key={item.producto_id} className="border rounded-lg p-4 flex gap-3 items-center">
+                          <div>
+                            {item.imagen ? (
+                              <img src={item.imagen} alt={item.nombre} className="w-12 h-12 rounded-full object-cover border" />
+                            ) : (
+                              <FaBoxOpen className="w-12 h-12 text-gray-400" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-medium">{item.nombre}</h4>
+                              {requiredIngredients.length > 0 && (
+                                <div className="text-xs text-gray-500">
+                                  <span className="font-medium">Usa: </span>
+                                  {requiredIngredients.map(({ ingredient, required }) => (
+                                    <span key={ingredient}>{ingredient} ({required}) </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <button
+                                type="button"
+                                onClick={() => updateCartQuantity(item.producto_id, item.cantidad - 1)}
+                                className={`w-6 h-6 rounded flex items-center justify-center font-bold transition
+                                  ${theme === "dark"
+                                    ? "bg-slate-700 text-amber-300 hover:bg-amber-500 hover:text-white border border-slate-600"
+                                    : "bg-gray-200 text-gray-800 hover:bg-primary hover:text-white"}
+                                `}
+                              >
+                                -
+                              </button>
+                              <span className="w-8 text-center">{item.cantidad}</span>
+                              <button
+                                type="button"
+                                onClick={() => updateCartQuantity(item.producto_id, item.cantidad + 1)}
+                                className={`w-6 h-6 rounded flex items-center justify-center font-bold transition
+                                  ${theme === "dark"
+                                    ? "bg-slate-700 text-amber-300 hover:bg-amber-500 hover:text-white border border-slate-600"
+                                    : "bg-gray-200 text-gray-800 hover:bg-primary hover:text-white"}
+                                `}
+                              >
+                                +
+                              </button>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm text-gray-600">${item.precio_unitario} base</p>
+                              <p className="font-bold">${item.subtotal}</p>
+                            </div>
+                            {item.isTorta && (
+                              <div className="border-t pt-3">
+                                <h5 className="text-sm font-semibold mb-2">🌶️ Ingredientes Extra (+$5 c/u)</h5>
+                                {item.extraIngredients && item.extraIngredients.length > 0 && (
+                                  <div className="mb-2">
+                                    <div className="flex flex-wrap gap-1 mb-2">
+                                      {item.extraIngredients.map(extra => (
+                                        <span key={extra.name} className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                                          {extra.icon} {extra.name} x{extra.quantity}
+                                          <button
+                                            type="button"
+                                            onClick={() => removeExtraIngredient(item.producto_id, extra.name)}
+                                            className={`ml-1 font-bold rounded-full transition
+                                              ${theme === "dark"
+                                                ? "bg-red-700 text-white hover:bg-red-500 border border-red-800"
+                                                : "text-red-500 hover:text-red-700"}
+                                            `}
+                                          >
+                                            ✕
+                                          </button>
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                <div className="grid grid-cols-3 gap-1">
+                                  {EXTRA_INGREDIENTS.map(ingredient => (
+                                    <button
+                                      key={ingredient.name}
+                                      type="button"
+                                      onClick={() => addExtraIngredient(item.producto_id, ingredient)}
+                                      className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-100 transition border border-blue-200"
+                                      title={`Agregar ${ingredient.name} (+$${ingredient.price})`}
+                                    >
+                                      {ingredient.icon} {ingredient.name}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div className="border-t pt-3 mt-3">
+                      <div className="flex justify-between items-center text-lg font-bold">
+                        <span>Total:</span>
+                        <span className="text-green-600">${calculateTotal()}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-4 mt-8">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setCart([]);
+                }}
+                className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={cart.length === 0}
+                className="flex-1 bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                Completar Venta (${calculateTotal()})
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+
+        
+      {showEditModal && selectedSell && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className={`${modalBg} rounded-2xl p-0 w-full max-w-5xl flex flex-col shadow-xl mt-24`}>
+      {/* Título arriba */}
+      <div className="flex items-center gap-4 px-8 pt-8 pb-2 border-b">
+        <FaEdit className={`text-3xl ${theme === "dark" ? "text-yellow-400" : "text-yellow-600"}`} />
+        <h2 className={`text-2xl font-bold ${modalTitle}`}>Editar Venta</h2>
+      </div>
+      <div className="px-10 py-10 text-[18px] overflow-y-auto max-h-[70vh]">
+        <form onSubmit={e => { e.preventDefault(); handleEditSell(); }}>
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-10">
+            {/* Productos en venta */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Productos en Venta</h3>
+              <div className="space-y-3 max-h-72 overflow-y-auto">
+                {editCart.map(item => (
+                  <div key={item.producto_id} className="border rounded-lg p-4 flex gap-3 items-center">
+                    <div>
+                      {item.imagen ? (
+                        <img src={item.imagen} alt={item.nombre} className="w-12 h-12 rounded-full object-cover border" />
+                      ) : (
+                        <FaBoxOpen className="w-12 h-12 text-gray-400" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium">{item.nombre}</h4>
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <button
+                          type="button"
+                          onClick={() => setEditCart(editCart.map(i => i.producto_id === item.producto_id ? { ...i, cantidad: Math.max(1, i.cantidad - 1), subtotal: (Math.max(1, i.cantidad - 1) * i.precio_unitario) } : i))}
+                          className="bg-gray-200 w-6 h-6 rounded flex items-center justify-center"
+                        >
+                          -
+                        </button>
+                        <span className="w-8 text-center">{item.cantidad}</span>
+                        <button
+                          type="button"
+                          onClick={() => setEditCart(editCart.map(i => i.producto_id === item.producto_id ? { ...i, cantidad: i.cantidad + 1, subtotal: ((i.cantidad + 1) * i.precio_unitario) } : i))}
+                          className="bg-gray-200 w-6 h-6 rounded flex items-center justify-center"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-600">${item.precio_unitario} base</p>
+                        <p className="font-bold">${item.subtotal}</p>
+                      </div>
+                      {item.isTorta && (
+                        <div className="border-t pt-3">
+                          <h5 className="text-sm font-semibold mb-2">🌶️ Ingredientes Extra (+$5 c/u)</h5>
+                          {item.extraIngredients && item.extraIngredients.length > 0 && (
+                            <div className="mb-2">
+                              <div className="flex flex-wrap gap-1 mb-2">
+                                {item.extraIngredients.map(extra => (
+                                  <span key={extra.name} className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                                    {extra.icon} {extra.name} x{extra.quantity}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditCart(editCart.map(i =>
+                                          i.producto_id === item.producto_id
+                                            ? {
+                                                ...i,
+                                                extraIngredients: (i.extraIngredients ?? [])
+                                                  .map(e =>
+                                                    e.name === extra.name
+                                                      ? { ...e, quantity: Math.max(0, e.quantity - 1) }
+                                                      : e
+                                                  )
+                                                  .filter(e => e.quantity > 0),
+                                                subtotal:
+                                                  (i.cantidad * i.precio_unitario) +
+                                                  ((i.extraIngredients ?? [])
+                                                    .map(e =>
+                                                      e.name === extra.name
+                                                        ? { ...e, quantity: Math.max(0, e.quantity - 1) }
+                                                        : e
+                                                    )
+                                                    .filter(e => e.quantity > 0)
+                                                    .reduce((sum, e) => sum + (e.price * e.quantity * i.cantidad), 0))
+                                              }
+                                            : i
+                                        ));
+                                      }}
+                                      className="text-red-500 hover:text-red-700 ml-1"
+                                    >
+                                      ✕
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          <div className="grid grid-cols-3 gap-1">
+                            {EXTRA_INGREDIENTS.map(ingredient => (
+                              <button
+                                key={ingredient.name}
+                                type="button"
+                                onClick={() => {
+                                  setEditCart(editCart.map(i => {
+                                    if (i.producto_id === item.producto_id) {
+                                      const existingExtra = i.extraIngredients?.find(e => e.name === ingredient.name);
+                                      let updatedExtras;
+                                      if (existingExtra) {
+                                        updatedExtras = (i.extraIngredients ?? []).map(e =>
+                                          e.name === ingredient.name
+                                            ? { ...e, quantity: e.quantity + 1 }
+                                            : e
+                                        );
+                                      } else {
+                                        updatedExtras = [...(i.extraIngredients || []), { ...ingredient, quantity: 1 }];
+                                      }
+                                      const extraCost = updatedExtras.reduce((sum, e) => sum + (e.price * e.quantity * i.cantidad), 0);
+                                      return {
+                                        ...i,
+                                        extraIngredients: updatedExtras,
+                                        subtotal: (i.cantidad * i.precio_unitario) + extraCost
+                                      };
+                                    }
+                                    return i;
+                                  }));
+                                }}
+                                className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-100 transition border border-blue-200"
+                                title={`Agregar ${ingredient.name} (+$${ingredient.price})`}
+                              >
+                                {ingredient.icon} {ingredient.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditCart(editCart.filter(i => i.producto_id !== item.producto_id))}
+                      className="text-red-500 hover:text-red-700 ml-1"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Agregar productos */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Agregar Productos</h3>
+              <div className="space-y-3 max-h-72 overflow-y-auto">
+                {products.map(product => (
+                  <div key={product._id} className="border rounded-lg p-3 flex gap-3 items-center">
+                    <div>
+                      {product.imagen ? (
+                        <img src={product.imagen} alt={product.nombre} className="w-12 h-12 rounded-full object-cover border" />
+                      ) : (
+                        <FaBoxOpen className="w-12 h-12 text-gray-400" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium">{product.nombre}</h4>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-1">
+                        ${product.precio} - {product.tipo}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!editCart.find(i => i.producto_id === product._id)) {
+                          setEditCart([...editCart, {
+                            producto_id: product._id,
+                            nombre: product.nombre,
+                            cantidad: 1,
+                            precio_unitario: product.precio,
+                            subtotal: product.precio,
+                            imagen: product.imagen,
+                            extraIngredients: [],
+                            isTorta: isTorta(product.nombre)
+                          }]);
+                        }
+                      }}
+                      className="px-3 py-1 rounded text-sm bg-primary text-white hover:bg-secondary"
+                    >
+                      + Agregar
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        )}
+          {/* Botones fijos abajo */}
+          <div className="sticky bottom-0 left-0 right-0 px-1 py-1 flex gap-2 z-40 bg-white/95 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={() => setShowEditModal(false)}
+              className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="flex-1 bg-yellow-500 text-white py-3 rounded-lg font-semibold hover:bg-yellow-600 transition"
+            >
+              Guardar Cambios
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+)}
+
+
+        
         {showViewModal && selectedSell && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className={`${theme === "dark" ? "bg-slate-800 border border-slate-700" : "bg-white border border-gray-200"} rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto`}>

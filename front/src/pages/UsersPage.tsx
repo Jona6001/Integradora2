@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { FaPlus } from "react-icons/fa"; 
+import { FaUserTie } from "react-icons/fa"; 
+
 
 
 interface User {
@@ -266,9 +268,11 @@ export default function UsersPage({ setCurrentPage }: UsersPageProps) {
           editingUser ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente',
           'success'
         );
-        setShowModal(false);
-        resetForm();
-        fetchUsers();
+        setTimeout(() => {
+  setShowModal(false);
+  resetForm();
+  fetchUsers();
+}, 3000);
       } else {
         showMessage(data.message || 'Error al procesar la solicitud', 'error');
       }
@@ -341,545 +345,467 @@ export default function UsersPage({ setCurrentPage }: UsersPageProps) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center ${
-        theme === 'dark' 
-          ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
-          : 'bg-gray-50'
-      }`}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
-          <p className={`mt-4 ${
-            theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+if (loading) {
+  return (
+    <div className={`min-h-screen flex items-center justify-center ${
+      theme === 'dark'
+        ? 'bg-gradient-to-br from-slate-900 to-slate-800'
+        : 'bg-gradient-to-br from-primary to-secondary'
+    }`}>
+      <div className={`${
+        theme === 'dark'
+          ? 'bg-slate-800/95 border-amber-600/30 text-amber-100'
+          : 'bg-white/95 border-slate-300 text-slate-700'
+      } backdrop-blur-sm rounded-3xl shadow-2xl p-8 border`}>
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-400 mb-4"></div>
+          <p className={`text-center mt-4 font-semibold ${
+            theme === 'dark' ? 'text-amber-400' : 'text-primary'
           }`}>
             {t.loading}
           </p>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
-    <div className={`min-h-screen py-8 ${
-      theme === 'dark' 
-        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
-        : 'bg-gray-50'
-    }`}>
-      <div className="container mx-auto px-4 max-w-7xl">
-        {/* Header */}
-        <div className="mb-8">
-          
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className={`text-4xl font-bold mb-2 ${
-                theme === 'dark' ? 'text-white' : 'text-gray-800'
-              }`} style={{ fontFamily: "'Playfair Display', serif" }}>
-                👥 {t.usersManagement}
-              </h1>
-              <p className={`${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                {t.manageUsers}
-              </p>
-            </div>
-            
-          {(currentUser.role === 'admin' || currentUser.role === 'gerente') && (
-            <button
-              onClick={handleCreateUser}
-              className={`flex items-center gap-2 ${
-                theme === "dark"
-                  ? "bg-amber-700 text-white hover:bg-amber-800"
-                  : "bg-primary text-white hover:bg-secondary"
-              } px-6 py-3 rounded-full font-semibold transition-all duration-300 shadow-lg`}
-            >
-              <FaPlus /> {t.createUser}
-            </button>
-          )}
-          </div>
+     <div className={`min-h-screen ${theme === "dark"
+    ? "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
+    : "bg-gradient-to-br from-primary via-primary/80 to-secondary"
+  } transition-colors duration-300`}>
+    <div className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+        <h1
+      className={`text-4xl font-bold mb-2 ${
+        theme === "dark" ? "text-amber-300" : "text-white"
+      }`}
+      style={{ fontFamily: "'Playfair Display', serif" }}
+    >
+      <FaUserTie className="inline-block mb-1 mr-2" /> {t.usersManagement}
+    </h1>
+          <p className={theme === "dark" ? "text-slate-300" : "text-white"}>
+            {t.manageUsers}
+          </p>
         </div>
-
-        {/* Message Alert */}
-        {message && (
-          <div className={`mb-6 p-4 rounded-lg border ${
-            messageType === 'success' 
-              ? 'bg-green-50 text-green-700 border-green-200' 
-              : 'bg-red-50 text-red-700 border-red-200'
-          }`}>
-            {message}
-          </div>
+        {(currentUser.role === 'admin' || currentUser.role === 'gerente') && (
+          <button
+            onClick={handleCreateUser}
+            className={`flex items-center gap-2 ${
+              theme === "dark"
+                ? "bg-amber-700 text-white hover:bg-amber-800"
+                : "bg-primary text-white hover:bg-secondary"
+            } px-6 py-3 rounded-full font-semibold transition-all duration-300 shadow-lg`}
+          >
+            <FaPlus /> {t.createUser}
+          </button>
         )}
+</div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className={`rounded-xl shadow-lg p-6 border ${
-            theme === 'dark' 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-200'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-sm ${
-                  theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                }`}>{t.totalUsers}</p>
-                <p className={`text-2xl font-bold ${
-                  theme === 'dark' ? 'text-white' : 'text-gray-800'
-                }`}>{users.length}</p>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-2xl">👥</span>
-              </div>
-            </div>
-          </div>
-
-          <div className={`rounded-xl shadow-lg p-6 border ${
-            theme === 'dark' 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-200'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-sm ${
-                  theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                }`}>{t.administrators}</p>
-                <p className={`text-2xl font-bold ${
-                  theme === 'dark' ? 'text-white' : 'text-gray-800'
-                }`}>
-                  {users.filter(u => u.role === 'admin').length}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                <span className="text-2xl">👑</span>
-              </div>
-            </div>
-          </div>
-
-          <div className={`rounded-xl shadow-lg p-6 border ${
-            theme === 'dark' 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-200'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-sm ${
-                  theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                }`}>{t.managers}</p>
-                <p className={`text-2xl font-bold ${
-                  theme === 'dark' ? 'text-white' : 'text-gray-800'
-                }`}>
-                  {users.filter(u => u.role === 'gerente').length}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-2xl">💼</span>
-              </div>
-            </div>
-          </div>
-
-          <div className={`rounded-xl shadow-lg p-6 border ${
-            theme === 'dark' 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-200'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-sm ${
-                  theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                }`}>{t.employees}</p>
-                <p className={`text-2xl font-bold ${
-                  theme === 'dark' ? 'text-white' : 'text-gray-800'
-                }`}>
-                  {users.filter(u => u.role === 'empleado').length}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-2xl">👤</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Users Table */}
-        <div className={`rounded-2xl shadow-lg overflow-hidden border ${
+{/* Stats Cards */}
+<div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className={`rounded-xl shadow-lg p-6 border ${
           theme === 'dark' 
             ? 'bg-gray-800 border-gray-700' 
             : 'bg-white border-gray-200'
         }`}>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className={`${
-                theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'
-              }`}>
-                <tr>
-                  <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-                  }`}>
-                    {t.user}
-                  </th>
-                  <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-                  }`}>
-                    {t.role}
-                  </th>
-                  <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-                  }`}>
-                    {t.contact}
-                  </th>
-                  <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-                  }`}>
-                    {t.status}
-                  </th>
-                  <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-                  }`}>
-                    {t.registrationDate}
-                  </th>
-                  {(currentUser.role === 'admin' || currentUser.role === 'gerente') && (
-                    <th className={`px-6 py-4 text-right text-xs font-medium uppercase tracking-wider ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-                    }`}>
-                      {t.actions}
-                    </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className={`divide-y ${
-                theme === 'dark' 
-                  ? 'bg-gray-800 divide-gray-700' 
-                  : 'bg-white divide-gray-200'
-              }`}>
-                {users.map((user) => (
-                  <tr key={user._id} className={`transition-colors ${
-                    theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
-                  }`}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
-                          <span className="text-white font-bold text-sm">
-                            {user.nombre.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="ml-4">
-                          <div className={`text-sm font-medium ${
-                            theme === 'dark' ? 'text-white' : 'text-gray-900'
-                          }`}>
-                            {user.nombre} {user.apellidos}
-                            {user._id === currentUser._id && (
-                              <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                {t.you}
-                              </span>
-                            )}
-                          </div>
-                          <div className={`text-sm ${
-                            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                          }`}>{user.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeClass(user.role)}`}>
-                        <span>{getRoleIcon(user.role)}</span>
-                        {getRoleText(user.role)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`text-sm ${
-                        theme === 'dark' ? 'text-gray-300' : 'text-gray-900'
-                      }`}>
-                        {user.telefono && (
-                          <div className="flex items-center gap-1">
-                            <span>📱</span>
-                            {user.telefono}
-                          </div>
-                        )}
-                        {user.direccion && (
-                          <div className={`flex items-center gap-1 ${
-                            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                          }`}>
-                            <span>🏠</span>
-                            {user.direccion}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                        user.status === 'activo' 
-                          ? theme === 'dark' 
-                            ? 'bg-green-900 text-green-200' 
-                            : 'bg-green-100 text-green-800'
-                          : theme === 'dark'
-                            ? 'bg-red-900 text-red-200'
-                            : 'bg-red-100 text-red-800'
-                      }`}>
-                        {user.status === 'activo' ? `✅ ${t.active}` : `❌ ${t.inactive}`}
-                      </span>
-                    </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                      theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                    }`}>
-                      {user.creadoEn ? new Date(user.creadoEn).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US') : 'N/A'}
-                    </td>
-                    {(currentUser.role === 'admin' || currentUser.role === 'gerente') && (
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleEditUser(user)}
-                            className={`transition-colors p-2 rounded-lg ${
-                              theme === 'dark' 
-                                ? 'text-blue-400 hover:text-blue-300 hover:bg-gray-700' 
-                                : 'text-blue-600 hover:text-blue-900 hover:bg-blue-50'
-                            }`}
-                            title={t.editUser}
-                          >
-                            ✏️
-                          </button>
-                          {user._id !== currentUser._id && (
-                            <button
-                              onClick={() => handleDeleteUser(user._id, `${user.nombre} ${user.apellidos}`)}
-                              className={`transition-colors p-2 rounded-lg ${
-                                theme === 'dark' 
-                                  ? 'text-red-400 hover:text-red-300 hover:bg-gray-700' 
-                                  : 'text-red-600 hover:text-red-900 hover:bg-red-50'
-                              }`}
-                              title={t.deleteUser}
-                            >
-                              🗑️
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+              }`}>{t.totalUsers}</p>
+              <p className={`text-2xl font-bold ${
+                theme === 'dark' ? 'text-white' : 'text-gray-800'
+              }`}>{users.length}</p>
+            </div>
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <span className="text-2xl">👥</span>
+            </div>
           </div>
         </div>
-
-        {users.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">👥</div>
-            <h3 className={`text-xl font-semibold mb-2 ${
-              theme === 'dark' ? 'text-white' : 'text-gray-800'
-            }`}>{t.noUsers}</h3>
-            <p className={`${
-              theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-            }`}>{t.createFirstUser}</p>
+        <div className={`rounded-xl shadow-lg p-6 border ${
+          theme === 'dark' 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-200'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+              }`}>{t.administrators}</p>
+              <p className={`text-2xl font-bold ${
+                theme === 'dark' ? 'text-white' : 'text-gray-800'
+              }`}>
+                {users.filter(u => u.role === 'admin').length}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+              <span className="text-2xl">👑</span>
+            </div>
           </div>
-        )}
+        </div>
+        <div className={`rounded-xl shadow-lg p-6 border ${
+          theme === 'dark' 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-200'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+              }`}>{t.managers}</p>
+              <p className={`text-2xl font-bold ${
+                theme === 'dark' ? 'text-white' : 'text-gray-800'
+              }`}>
+                {users.filter(u => u.role === 'gerente').length}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <span className="text-2xl">💼</span>
+            </div>
+          </div>
+        </div>
+        <div className={`rounded-xl shadow-lg p-6 border ${
+          theme === 'dark' 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-200'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+              }`}>{t.employees}</p>
+              <p className={`text-2xl font-bold ${
+                theme === 'dark' ? 'text-white' : 'text-gray-800'
+              }`}>
+                {users.filter(u => u.role === 'empleado').length}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+              <span className="text-2xl">👤</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Modal para crear/editar usuario */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className={`rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border ${
-            theme === 'dark' 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-200'
+  {/* Users Table */}
+<div className={`rounded-2xl shadow-lg overflow-hidden border ${
+  theme === 'dark'
+    ? 'bg-gray-800 border-gray-700'
+    : 'bg-white border-primary'
+}`}>
+  <div className="overflow-x-auto">
+    <table className="w-full">
+      <thead className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-amber-50'}`}>
+        <tr>
+          <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${
+            theme === 'dark' ? 'text-gray-300' : 'text-primary'
+          }`}>{t.user}</th>
+          <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${
+            theme === 'dark' ? 'text-gray-300' : 'text-primary'
+          }`}>{t.role}</th>
+          <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${
+            theme === 'dark' ? 'text-gray-300' : 'text-primary'
+          }`}>{t.contact}</th>
+          <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${
+            theme === 'dark' ? 'text-gray-300' : 'text-primary'
+          }`}>{t.status}</th>
+          <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${
+            theme === 'dark' ? 'text-gray-300' : 'text-primary'
+          }`}>{t.registrationDate}</th>
+          {(currentUser.role === 'admin' || currentUser.role === 'gerente') && (
+            <th className={`px-6 py-4 text-right text-xs font-medium uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-primary'
+            }`}>{t.actions}</th>
+          )}
+        </tr>
+      </thead>
+      <tbody className={`divide-y ${
+        theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-primary'
+      }`}>
+        {users.map((user) => (
+          <tr key={user._id} className={`transition-colors ${
+            theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-amber-50'
           }`}>
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className={`text-2xl font-bold ${
-                  theme === 'dark' ? 'text-white' : 'text-gray-800'
-                }`}>
-                  {editingUser ? `✏️ ${t.editingUser}` : `➕ ${t.creatingUser}`}
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowModal(false);
-                    resetForm();
-                  }}
-                  className={`transition-colors ${
-                    theme === 'dark' 
-                      ? 'text-gray-400 hover:text-white' 
-                      : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                >
-                  <span className="text-2xl">✕</span>
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className={`block font-semibold mb-2 ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      {t.name} {t.required}
-                    </label>
-                    <input
-                      type="text"
-                      name="nombre"
-                      value={formData.nombre}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
-                        theme === 'dark' 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className={`block font-semibold mb-2 ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      {t.lastName} {t.required}
-                    </label>
-                    <input
-                      type="text"
-                      name="apellidos"
-                      value={formData.apellidos}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
-                        theme === 'dark' 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
-                      required
-                    />
-                  </div>
+            <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? '' : 'text-gray-900'}`}>
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">
+                    {user.nombre.charAt(0).toUpperCase()}
+                  </span>
                 </div>
+                <div className="ml-4">
+                  <div className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    {user.nombre} {user.apellidos}
+                    {user._id === currentUser._id && (
+                      <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                        {t.you}
+                      </span>
+                    )}
+                  </div>
+                  <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{user.email}</div>
+                </div>
+              </div>
+            </td>
+            <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? '' : 'text-gray-900'}`}>
+              <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeClass(user.role)}`}>
+                <span>{getRoleIcon(user.role)}</span>
+                {getRoleText(user.role)}
+              </span>
+            </td>
+            <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? '' : 'text-gray-900'}`}>
+              <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
+                {user.telefono && (
+                  <div className="flex items-center gap-1">
+                    <span>📱</span>
+                    {user.telefono}
+                  </div>
+                )}
+                {user.direccion && (
+                  <div className={`flex items-center gap-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <span>🏠</span>
+                    {user.direccion}
+                  </div>
+                )}
+              </div>
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap">
+              <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
+                user.status === 'activo' 
+                  ? theme === 'dark' 
+                    ? 'bg-green-900 text-green-200' 
+                    : 'bg-green-100 text-green-800'
+                  : theme === 'dark'
+                    ? 'bg-red-900 text-red-200'
+                    : 'bg-red-100 text-red-800'
+              }`}>
+                {user.status === 'activo' ? `✅ ${t.active}` : `❌ ${t.inactive}`}
+              </span>
+            </td>
+            <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+              {user.creadoEn ? new Date(user.creadoEn).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US') : 'N/A'}
+            </td>
+            {(currentUser.role === 'admin' || currentUser.role === 'gerente') && (
+              <td className={`px-6 py-4 whitespace-nowrap text-right text-sm font-medium ${theme === 'dark' ? '' : 'text-gray-900'}`}>
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => handleEditUser(user)}
+                    className={`transition-colors p-2 rounded-lg ${
+                      theme === 'dark' 
+                        ? 'text-blue-400 hover:text-blue-300 hover:bg-gray-700' 
+                        : 'text-blue-600 hover:text-blue-900 hover:bg-blue-50'
+                    }`}
+                    title={t.editUser}
+                  >
+                    ✏️
+                  </button>
+                  {user._id !== currentUser._id && (
+                    <button
+                      onClick={() => handleDeleteUser(user._id, `${user.nombre} ${user.apellidos}`)}
+                      className={`transition-colors p-2 rounded-lg ${
+                        theme === 'dark' 
+                          ? 'text-red-400 hover:text-red-300 hover:bg-gray-700' 
+                          : 'text-red-600 hover:text-red-900 hover:bg-red-50'
+                      }`}
+                      title={t.deleteUser}
+                    >
+                      🗑️
+                    </button>
+                  )}
+                </div>
+              </td>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
+      {/* Empty state */}
+      {users.length === 0 && !loading && (
+        <div className="text-center py-12">
+          <div className={`${theme === "dark" ? "bg-slate-800/80" : "bg-white/90"} backdrop-blur-sm rounded-3xl p-8 inline-block`}>
+            <div className="text-6xl mb-4">👥</div>
+            <h3 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{t.noUsers}</h3>
+            <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t.createFirstUser}</p>
+            {(currentUser.role === 'admin' || currentUser.role === 'gerente') && (
+              <button
+                onClick={handleCreateUser}
+                className={`flex items-center gap-2 ${theme === "dark"
+                  ? "bg-amber-700 text-white hover:bg-amber-800"
+                  : "bg-primary text-white hover:bg-secondary"
+                } px-6 py-3 rounded-full font-semibold transition-all duration-300 mt-6`}
+              >
+                <FaPlus /> {t.createUser}
+              </button>
+          )}
+          </div>
+        </div>
+      )}
+    </div>
+  
+      
+{showModal && (
+  <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50">
+    <div className="w-full flex justify-center min-h-screen">
+      <div className={`${theme === 'dark' ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-gray-200'} rounded-2xl p-0 w-full max-w-2xl flex flex-row shadow-xl mx-1 mt-24 mb-16`}>
+        {/* Panel decorativo izquierdo más pequeño */}
+        <div className={`hidden md:flex flex-col items-center justify-center px-3 py-4 rounded-l-2xl ${theme === "dark" ? "bg-slate-900" : "bg-primary/90"}`}>
+          <FaUserTie className={`text-3xl mb-2 ${theme === "dark" ? "text-amber-400" : "text-white"}`} />
+          <span className={`text-base font-bold text-center ${theme === "dark" ? "text-amber-200" : "text-white"}`}>
+            {editingUser ? "Editar Usuario" : "Nuevo Usuario"}
+          </span>
+        </div>
 
-                <div>
-                  <label className={`block font-semibold mb-2 ${
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    📧 {t.email} {t.required}
-                  </label>
+       {/* Formulario horizontal más compacto verticalmente */}
+<div className="flex-1 px-8 py-4 text-[18px] flex flex-col">
+  <h2 className={`text-[22px] font-bold mb-3 ${theme === "dark" ? "text-amber-400" : "text-primary"}`}>
+    {editingUser ? `✏️ ${t.editingUser}` : `➕ ${t.creatingUser}`}
+  </h2>
+  {/* Message Alert - ahora arriba de los campos */}
+  {message && (
+    <div
+      className={`mb-4 px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 border font-bold text-base justify-center ${
+        messageType === 'success'
+          ? theme === 'dark'
+            ? 'bg-green-900 text-green-200 border-green-700'
+            : 'bg-green-50 text-green-700 border-green-200'
+          : theme === 'dark'
+            ? 'bg-red-900 text-red-200 border-red-700'
+            : 'bg-red-50 text-red-700 border-red-200'
+      }`}
+      style={{ minHeight: '48px' }}
+    >
+      <span className="text-2xl">
+        {messageType === 'success' ? '✅' : '⚠️'}
+      </span>
+      <span className="text-lg">{message}</span>
+    </div>
+  )}
+
+
+
+
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <div className="mb-2">
+                  <label className="block font-semibold mb-1 text-base">{t.name} {t.required}</label>
+                  <input
+                    type="text"
+                    name="nombre"
+                    value={formData.nombre}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-base ${theme === "dark" ? "bg-slate-900 text-slate-100 border-slate-700" : "bg-white text-gray-900 border-gray-300"}`}
+                    required
+                    placeholder="Ej: Juan"
+                  />
+                </div>
+                <div className="mb-2">
+                  <label className="block font-semibold mb-1 text-base">{t.lastName} {t.required}</label>
+                  <input
+                    type="text"
+                    name="apellidos"
+                    value={formData.apellidos}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-base ${theme === "dark" ? "bg-slate-900 text-slate-100 border-slate-700" : "bg-white text-gray-900 border-gray-300"}`}
+                    required
+                    placeholder="Ej: Pérez"
+                  />
+                </div>
+                <div className="mb-2">
+                  <label className="block font-semibold mb-1 text-base">📧 {t.email} {t.required}</label>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
-                      theme === 'dark' 
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-base ${theme === "dark" ? "bg-slate-900 text-slate-100 border-slate-700" : "bg-white text-gray-900 border-gray-300"}`}
                     required
+                    placeholder="ejemplo@email.com"
                   />
                 </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className={`block font-semibold mb-2 ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      🔒 {t.password} {!editingUser && t.required}
-                    </label>
-                    <input
-                      type="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
-                        theme === 'dark' 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
-                      placeholder={editingUser ? t.leaveEmptyNoChange : t.minCharacters}
-                      required={!editingUser}
-                    />
-                  </div>
-
-                  <div>
-                    <label className={`block font-semibold mb-2 ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      👤 {t.role} {t.required}
-                    </label>
-                    <select
-                      name="role"
-                      value={formData.role}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
-                        theme === 'dark' 
-                          ? 'bg-gray-700 border-gray-600 text-white' 
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
-                      required
-                    >
-                      <option value="empleado">👤 {t.employees}</option>
-                      <option value="gerente">💼 {t.managers}</option>
-                      {currentUser.role === 'admin' && (
-                        <option value="admin">👑 {t.administrators}</option>
-                      )}
-                    </select>
-                  </div>
+                <div className="mb-2">
+                  <label className="block font-semibold mb-1 text-base">🔒 {t.password} {!editingUser && t.required}</label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-base ${theme === "dark" ? "bg-slate-900 text-slate-100 border-slate-700" : "bg-white text-gray-900 border-gray-300"}`}
+                    placeholder={editingUser ? t.leaveEmptyNoChange : t.minCharacters}
+                    required={!editingUser}
+                  />
                 </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className={`block font-semibold mb-2 ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      📱 {t.phone}
-                    </label>
-                    <input
-                      type="tel"
-                      name="telefono"
-                      value={formData.telefono}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
-                        theme === 'dark' 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
-                    />
-                  </div>
-
-                  <div>
-                    <label className={`block font-semibold mb-2 ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      🏠 {t.address}
-                    </label>
-                    <input
-                      type="text"
-                      name="direccion"
-                      value={formData.direccion}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
-                        theme === 'dark' 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowModal(false);
-                      resetForm();
-                    }}
-                    className={`flex-1 py-3 rounded-lg font-semibold transition-colors border ${
-                      theme === 'dark' 
-                        ? 'bg-gray-600 text-white hover:bg-gray-500 border-gray-600' 
-                        : 'bg-gray-200 text-gray-800 hover:bg-gray-300 border-gray-300'
-                    }`}
+              </div>
+              <div>
+                <div className="mb-2">
+                  <label className="block font-semibold mb-1 text-base">👤 {t.role} {t.required}</label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-base ${theme === "dark" ? "bg-slate-900 text-slate-100 border-slate-700" : "bg-white text-gray-900 border-gray-300"}`}
+                    required
                   >
-                    {t.cancel}
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition-colors"
-                  >
-                    {editingUser ? `💾 ${t.updateUser}` : `➕ ${t.createUser}`}
-                  </button>
+                    <option value="empleado">👤 {t.employees}</option>
+                    <option value="gerente">💼 {t.managers}</option>
+                    {currentUser.role === 'admin' && (
+                      <option value="admin">👑 {t.administrators}</option>
+                    )}
+                  </select>
                 </div>
-              </form>
+                <div className="mb-2">
+                  <label className="block font-semibold mb-1 text-base">📱 {t.phone}</label>
+                  <input
+                    type="tel"
+                    name="telefono"
+                    value={formData.telefono}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-base ${theme === "dark" ? "bg-slate-900 text-slate-100 border-slate-700" : "bg-white text-gray-900 border-gray-300"}`}
+                    placeholder="Ej: 3312345678"
+                  />
+                </div>
+                <div className="mb-2">
+                  <label className="block font-semibold mb-1 text-base">🏠 {t.address}</label>
+                  <input
+                    type="text"
+                    name="direccion"
+                    value={formData.direccion}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-base ${theme === "dark" ? "bg-slate-900 text-slate-100 border-slate-700" : "bg-white text-gray-900 border-gray-300"}`}
+                    placeholder="Ej: Calle 123, Colonia"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+            <div className="flex gap-4 pt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowModal(false);
+                  resetForm();
+                }}
+                className={`flex-1 bg-gray-200 text-gray-800 py-2 rounded-xl font-semibold hover:bg-gray-300 transition text-base`}
+              >
+                {t.cancel}
+              </button>
+              <button
+                type="submit"
+                className={`flex-1 bg-primary text-white py-2 rounded-xl font-semibold hover:bg-secondary transition text-base`}
+              >
+                {editingUser ? `💾 ${t.updateUser}` : `➕ ${t.createUser}`}
+              </button>
+            </div>
+          </form>
         </div>
-      )}
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

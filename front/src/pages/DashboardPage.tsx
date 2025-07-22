@@ -227,7 +227,7 @@ export default function DashboardPage({ user, setCurrentPage }) {
       stockStatus: "Estado del Stock",
       lowStockItems: "Productos con Stock Bajo",
       viewAll: "Ver Todo",
-      loading: "Cargando...",
+      loading: "Cargando Inicio...",
       newSale: "Nueva Venta",
       availableProducts: "Productos Disponibles",
       cart: "Carrito",
@@ -259,7 +259,7 @@ export default function DashboardPage({ user, setCurrentPage }) {
       stockStatus: "Stock Status",
       lowStockItems: "Low Stock Items",
       viewAll: "View All",
-      loading: "Loading...",
+      loading: "Loading Home...",
       newSale: "New Sale",
       availableProducts: "Available Products",
       cart: "Cart",
@@ -538,28 +538,30 @@ const removeExtraIngredient = (productId, ingredientName) => {
     }).slice(0, 5); // Solo mostrar top 5
   };
 
-  if (loading) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center ${
-        theme === 'dark' 
-          ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
-          : 'bg-gradient-to-br from-slate-50 via-gray-100 to-slate-200'
-      }`}>
-        <div className={`${
-          theme === 'dark' 
-            ? 'bg-slate-800/95 border-amber-600/30 text-amber-100' 
-            : 'bg-white/95 border-slate-300 text-slate-700'
-        } backdrop-blur-sm rounded-2xl shadow-xl p-8 border`}>
-          <div className="flex flex-col items-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mb-4"></div>
-            <p className="font-medium">
-              {t.loading}
-            </p>
-          </div>
+if (loading) {
+  return (
+    <div className={`min-h-screen flex items-center justify-center ${
+      theme === "dark"
+        ? "bg-gradient-to-br from-slate-900 to-slate-800"
+        : "bg-gradient-to-br from-primary to-secondary"
+    }`}>
+      <div className={`${
+        theme === "dark"
+          ? "bg-slate-800/95 border-amber-600/30 text-amber-100"
+          : "bg-white/95 border-slate-300 text-slate-700"
+      } backdrop-blur-sm rounded-3xl shadow-2xl p-8 border`}>
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-400 mb-4"></div>
+          <p className={`text-center mt-4 font-semibold ${
+            theme === "dark" ? "text-amber-400" : "text-primary"
+          }`}>
+            {t.loading}
+          </p>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   // ------- Lo que se va a mostrar en pantalla -------------
   return (
@@ -743,9 +745,9 @@ const removeExtraIngredient = (productId, ingredientName) => {
     {t.quickActions}
   </h2>
   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-    {filteredActions.map((action, index) => (
+    {filteredActions.map((action) => (
       <button
-        key={index}
+        key={action.title}
         onClick={action.action}
         className={`group relative rounded-3xl overflow-hidden transition-all duration-300 hover:scale-105 shadow-2xl
           border-4
@@ -819,8 +821,8 @@ const removeExtraIngredient = (productId, ingredientName) => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
-                  {getLowStockItems().map((item, index) => (
-                    <div key={index} className="bg-red-50 border border-red-200 rounded-lg p-2">
+                  {getLowStockItems().map((item) => (
+                    <div key={item.producto} className="bg-red-50 border border-red-200 rounded-lg p-2">
                       <h4 className="font-medium text-red-800 text-sm">{item.producto}</h4>
                       <p className="text-xs text-red-600">
                         {item.cantidad} {item.unidad}

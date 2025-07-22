@@ -309,19 +309,48 @@ function App() {
                     <hr className={`my-2 ${
                       theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
                     }`} />
-                    
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setShowUserMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                      <span>{t.logout}</span>
-                    </button>
+
+        <button
+          onClick={() => {
+            import('sweetalert2').then(Swal => {
+              Swal.default.fire({
+                title: '¿Cerrar sesión?',
+                text: '¿Estás seguro que deseas cerrar sesión?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: theme === 'dark' ? '#d33' : '#8B4513', // Rojo en dark, madera en claro
+                cancelButtonColor: theme === 'dark' ? '#3085d6' : '#A0522D', // Azul en dark, siena en claro
+                background: theme === 'dark' ? '#1C1611' : '#FDF6E3', // Fondo según tema
+                color: theme === 'dark' ? '#F5E6D3' : '#3E2723', // Texto según tema
+                confirmButtonText: 'Sí, cerrar sesión',
+                cancelButtonText: 'Cancelar',
+                customClass: {
+                  popup: theme === 'dark' ? 'swal2-dark' : 'swal2-light',
+                  title: theme === 'dark' ? 'text-amber-300 font-wood-heading' : 'text-primary font-wood-heading',
+                  htmlContainer: theme === 'dark' ? 'text-slate-200 font-wood-body' : 'text-gray-900 font-wood-body',
+                  confirmButton: theme === 'dark' ? 'bg-red-700 text-white font-bold' : 'bg-primary text-white font-bold',
+                  cancelButton: theme === 'dark' ? 'bg-gray-700 text-white font-bold' : 'bg-secondary text-white font-bold',
+                }
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  handleLogout();
+                  setShowUserMenu(false);
+                }
+              });
+            });
+          }}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
+            ${theme === 'dark'
+              ? 'text-red-400 hover:bg-red-900/20'
+              : 'text-red-600 hover:bg-red-50'}
+          `}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          <span>{t.logout}</span>
+        </button>
+
                   </div>
                 </div>
               )}

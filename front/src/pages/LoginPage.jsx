@@ -214,7 +214,6 @@ export default function LoginPage({ onLogin }) {
     setChangePasswordLoading(false);
   };
 
-  // --- VISTAS ---
   if (showRegister) {
     return <RegisterPage onBack={() => setShowRegister(false)} />;
   }
@@ -374,15 +373,16 @@ export default function LoginPage({ onLogin }) {
               <label className="block mb-1 text-gray-700 font-semibold flex items-center gap-2">
                 <FaEnvelope /> Correo Electrónico
               </label>
-              <input
-                type="email"
-                value={forgotPasswordEmail}
-                onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-                placeholder="tu@correo.com"
-                autoFocus
-                disabled={forgotPasswordLoading || cooldown > 0}
-              />
+            <input
+              type="email"
+              value={forgotPasswordEmail}
+              onChange={(e) => setForgotPasswordEmail(e.target.value)}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300
+                bg-white text-black placeholder-gray-500`}
+              placeholder="tu@correo.com"
+              autoFocus
+              disabled={forgotPasswordLoading || cooldown > 0}
+            />
             </div>
             {forgotPasswordMessage && (() => {
               let messageClass = '';
@@ -446,100 +446,102 @@ export default function LoginPage({ onLogin }) {
     );
   }
 
-  // --- LOGIN PRINCIPAL ---
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-secondary">
-      <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
-        <div className="text-center mb-6">
-          <div className="flex justify-center mb-4">
-            <div className="w-50 h-40 rounded-full overflow-hidden flex items-center justify-center bg-white shadow-lg mx-auto border-4 border-primary">
-              <img src={chems} alt="Logo Lonches El Primo" className="object-cover w-full h-full" />
-            </div>
+ // --- LOGIN PRINCIPAL ---
+return (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-secondary">
+    <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
+      <div className="text-center mb-6">
+        <div className="flex justify-center mb-4">
+          <div className="w-50 h-40 rounded-full overflow-hidden flex items-center justify-center bg-white shadow-lg mx-auto border-4 border-primary">
+            <img src={chems} alt="Logo Lonches El Primo" className="object-cover w-full h-full" />
           </div>
-          <h2 className="text-3xl font-bold text-primary font-cursive flex items-center justify-center gap-2">
-             El Primo Lonches
-          </h2>
-          <p className="text-gray-600 mt-2 flex items-center justify-center gap-2">
-            <FaSignInAlt /> Inicia sesión en tu cuenta
-          </p>
         </div>
+        <h2 className="text-3xl font-bold text-primary font-cursive flex items-center justify-center gap-2">
+           El Primo Lonches
+        </h2>
+        <p className="text-gray-600 mt-2 flex items-center justify-center gap-2">
+          <FaSignInAlt /> Inicia sesión en tu cuenta
+        </p>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block mb-1 text-gray-700 font-semibold flex items-center gap-2">
-              <FaUser /> Usuario
-            </label>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="block mb-1 text-gray-700 font-semibold flex items-center gap-2">
+            <FaUser /> Usuario
+          </label>
+          <input
+            type="text"
+            name="usuario"
+            value={form.usuario}
+            onChange={handleChange}
+            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300
+              bg-white text-black placeholder-gray-500`}
+            placeholder="Nombre de usuario"
+            autoFocus
+            disabled={loading}
+          />
+        </div>
+        <div>
+          <label className="block mb-1 text-gray-700 font-semibold flex items-center gap-2">
+            <FaLock /> Contraseña
+          </label>
+          <div className="relative">
             <input
-              type="text"
-              name="usuario"
-              value={form.usuario}
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={form.password}
               onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-              placeholder="Nombre de usuario"
-              autoFocus
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300
+                bg-white text-black placeholder-gray-500`}
+              placeholder="Tu contraseña"
               disabled={loading}
             />
-          </div>
-          <div>
-            <label className="block mb-1 text-gray-700 font-semibold flex items-center gap-2">
-              <FaLock /> Contraseña
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary border-gray-300"
-                placeholder="Tu contraseña"
-                disabled={loading}
-              />
-              <button
-                type="button"
-                className="btn-password-toggle absolute right-3 top-2 -translate-y-1.3 focus:outline-none"
-                tabIndex={-1}
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label="Mostrar/Ocultar contraseña"
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
-            </div>
-          </div>
-          {error && (
-            <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm border border-red-200 flex items-center gap-2">
-              <MdOutlinePassword className="text-xl" /> {error}
-            </div>
-          )}
-          <button
-            type="submit"
-            className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition flex items-center justify-center gap-2"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <span className="animate-spin mr-2 border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>{" "}
-                Iniciando sesión...
-              </>
-            ) : (
-              <>
-                <FaSignInAlt /> Iniciar sesión
-              </>
-            )}
-          </button>
-          <div className="text-center space-y-2">
             <button
               type="button"
-              className="text-primary hover:text-secondary font-semibold transition text-sm flex items-center gap-2 mx-auto"
-              onClick={() => setShowForgotPassword(true)}
-              disabled={loading}
+              className="btn-password-toggle absolute right-3 top-2 -translate-y-1.3 focus:outline-none"
+              tabIndex={-1}
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label="Mostrar/Ocultar contraseña"
             >
-              <FaKey /> ¿Olvidaste tu contraseña?
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
             </button>
           </div>
-        </form>
-      </div>
+        </div>
+        {error && (
+          <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm border border-red-200 flex items-center gap-2">
+            <MdOutlinePassword className="text-xl" /> {error}
+          </div>
+        )}
+        <button
+          type="submit"
+          className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition flex items-center justify-center gap-2"
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <span className="animate-spin mr-2 border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>{" "}
+              Iniciando sesión...
+            </>
+          ) : (
+            <>
+              <FaSignInAlt /> Iniciar sesión
+            </>
+          )}
+        </button>
+        <div className="text-center space-y-2">
+          <button
+            type="button"
+            className="text-primary hover:text-secondary font-semibold transition text-sm flex items-center gap-2 mx-auto"
+            onClick={() => setShowForgotPassword(true)}
+            disabled={loading}
+          >
+            <FaKey /> ¿Olvidaste tu contraseña?
+          </button>
+        </div>
+      </form>
     </div>
-  );
+  </div>
+);
 }
 
 LoginPage.propTypes = {
