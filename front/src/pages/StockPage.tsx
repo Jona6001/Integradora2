@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import apiService from "../services/api";
 import { FaPlus } from "react-icons/fa"; 
+import Swal from 'sweetalert2';
 
 
 type StockItem = {
@@ -180,7 +181,7 @@ const handleCreateStock = async (e) => {
 const handleEditStock = async (e) => {
   e.preventDefault();
   if (!selectedStock) {
-    alert('No hay producto seleccionado para editar.');
+    Swal.fire('Error', 'No hay producto seleccionado para editar.', 'error');
     return;
   }
   try {
@@ -189,35 +190,51 @@ const handleEditStock = async (e) => {
       cantidad: parseFloat(String(selectedStock.cantidad)),
       unidad: selectedStock.unidad,
       status: selectedStock.status,
-      imagen: selectedStock.imagen // <-- AGREGA ESTA LÍNEA
+      imagen: selectedStock.imagen 
     };
     await apiService.updateStock(selectedStock._id, stockData);
     setShowEditModal(false);
     setSelectedStock(null);
     loadData();
-    alert('Stock actualizado exitosamente');
+    Swal.fire('Actualizado', 'Stock actualizado exitosamente', 'success');
   } catch (error) {
     console.error('Error actualizando stock:', error);
-    alert('Error al actualizar stock.');
+    Swal.fire('Error', 'Error al actualizar stock.', 'error');
   }
 };
 
-  const handleDeleteStock = async () => {
-    if (!selectedStock) {
-      alert('No hay producto seleccionado para eliminar.');
-      return;
-    }
-    try {
-      await apiService.deleteStock(selectedStock._id);
-      setShowDeleteModal(false);
-      setSelectedStock(null);
-      loadData();
-      alert('Producto de stock eliminado exitosamente');
-    } catch (error) {
-      console.error('Error eliminando stock:', error);
-      alert('Error al eliminar producto de stock.');
-    }
-  };
+const handleDeleteStock = async () => {
+  if (!selectedStock) {
+    alert('No hay producto seleccionado para eliminar.');
+    return;
+  }
+
+  const result = await Swal.fire({
+    title: '¿Eliminar del Stock?',
+    text: `¿Estás seguro de que deseas eliminar "${selectedStock.producto}" del stock?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: theme === "dark" ? '#d33' : '#A0522D',
+    cancelButtonColor: theme === "dark" ? '#3085d6' : '#A0522D',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
+    background: theme === "dark" ? '#1C1611' : '#FDF6E3',
+    color: theme === "dark" ? '#F5E6D3' : '#3E2723',
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    await apiService.deleteStock(selectedStock._id);
+    setShowDeleteModal(false);
+    setSelectedStock(null);
+    loadData();
+    Swal.fire('Eliminado', 'Producto de stock eliminado exitosamente', 'success');
+  } catch (error) {
+    console.error('Error eliminando stock:', error);
+    Swal.fire('Error', 'Error al eliminar producto de stock.', 'error');
+  }
+};
 
   const openEditModal = (stockItem) => {
     setSelectedStock({ ...stockItem });
@@ -486,31 +503,44 @@ if (loading) {
                     </span>
                   </div>
 
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openEditModal(item)}
-                      className="flex-1 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-600 transition font-semibold"
-                    >
-                      ✏️ Editar
-                    </button>
+                 <div className="flex gap-2">
+  <button
+    onClick={() => openEditModal(item)}
+    className="flex-1 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-600 transition font-semibold"
+  >
+    ✏️ Editar
+  </button>
 
-                      <button
-                    onClick={() => openFillModal(item)}
-                    className="flex-1 bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700 transition font-semibold"
-                    title="Rellenar stock"
-                  >
-                    ♻️ Rellenar
-                  </button>
+  <button
+    onClick={() => openFillModal(item)}
+    className="flex-1 bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700 transition font-semibold"
+    title="Rellenar stock"
+  >
+    ♻️ Rellenar
+  </button>
 
-
-
-                    <button
-                      onClick={() => openDeleteModal(item)}
-                      className="flex-1 bg-red-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-red-600 transition font-semibold"
-                    >
-                      🗑️ Eliminar
-                    </button>
-                  </div>
+  {item.status === "inactivo" ? (
+    <button
+      onClick={async () => {
+        await apiService.updateStock(item._id, { ...item, status: "activo" });
+        loadData();
+        Swal.fire('Activado', 'El producto ha sido activado en el stock.', 'success');
+      }}
+      className="flex-1 bg-green-700 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-800 transition font-semibold"
+      title="Activar stock"
+    >
+      ✅ Activar
+    </button>
+  ) : (
+    <button
+      onClick={() => openDeleteModal(item)}
+      className="flex-1 bg-red-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-red-600 transition font-semibold"
+      title="Eliminar"
+    >
+      🗑️ Eliminar
+    </button>
+  )}
+</div>
 
                 </div>
               </div>

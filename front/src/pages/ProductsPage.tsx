@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import apiService from "../services/api";
 import { FaEdit, FaTrash, FaPlus, FaBoxOpen, FaFilter, FaSearch, FaCheckCircle, FaTimesCircle, FaImage, FaDollarSign, FaHashtag } from "react-icons/fa";
+import Swal from 'sweetalert2';
+
+
 
 type Product = {
   _id: number | string;
@@ -111,7 +114,7 @@ const handleCreateProduct = async (e) => {
   e.preventDefault();
   try {
     const productData = {
-      _id: getNextProductId(), // <-- autoincrementa
+      _id: getNextProductId(),
       nombre: newProduct.nombre,
       precio: parseFloat(String(newProduct.precio)),
       tipo: newProduct.tipo,
@@ -122,32 +125,34 @@ const handleCreateProduct = async (e) => {
     setNewProduct({ _id: "", nombre: "", precio: "", tipo: "torta", status: "activo", imagen: "" });
     setShowCreateModal(false);
     loadProducts();
+    Swal.fire('Producto creado', 'El producto fue creado exitosamente', 'success');
   } catch (error) {
     console.error('Error creando producto:', error);
-    alert('Error al crear producto. Revisa que el ID no esté duplicado.');
+    Swal.fire('Error', 'Error al crear producto. Revisa que el ID no esté duplicado.', 'error');
   }
 };
 
-  const handleEditProduct = async (e) => {
-    e.preventDefault();
-    if (!selectedProduct) return;
-    try {
-      const productData = {
-        nombre: selectedProduct.nombre,
-        precio: parseFloat(String(selectedProduct.precio)),
-        tipo: selectedProduct.tipo,
-        status: selectedProduct.status,
-        imagen: selectedProduct.imagen
-      };
-      await apiService.updateProduct(selectedProduct._id, productData);
-      setShowEditModal(false);
-      setSelectedProduct(null);
-      loadProducts();
-    } catch (error) {
-      console.error('Error actualizando producto:', error);
-      alert('Error al actualizar producto.');
-    }
-  };
+const handleEditProduct = async (e) => {
+  e.preventDefault();
+  if (!selectedProduct) return;
+  try {
+    const productData = {
+      nombre: selectedProduct.nombre,
+      precio: parseFloat(String(selectedProduct.precio)),
+      tipo: selectedProduct.tipo,
+      status: selectedProduct.status,
+      imagen: selectedProduct.imagen
+    };
+    await apiService.updateProduct(selectedProduct._id, productData);
+    setShowEditModal(false);
+    setSelectedProduct(null);
+    loadProducts();
+    Swal.fire('Producto actualizado', 'El producto fue actualizado exitosamente', 'success');
+  } catch (error) {
+    console.error('Error actualizando producto:', error);
+    Swal.fire('Error', 'Error al actualizar producto.', 'error');
+  }
+};
 
   const handleDeleteProduct = async () => {
     if (!selectedProduct) return;

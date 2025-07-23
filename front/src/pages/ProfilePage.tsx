@@ -19,6 +19,7 @@ interface ProfilePageProps {
 }
 
 export default function ProfilePage({ setCurrentPage, user, onUpdateUser }: ProfilePageProps) {
+ const API_URL = import.meta.env.VITE_API_URL;
   // Example: get theme from localStorage, default to 'light'
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   useEffect(() => {
@@ -43,6 +44,9 @@ export default function ProfilePage({ setCurrentPage, user, onUpdateUser }: Prof
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
   const [showPasswordSection, setShowPasswordSection] = useState(false);
+    
+
+
 
   // 👇 USAR EL ENDPOINT EXISTENTE getUserById PARA CARGAR DATOS FRESCOS
   useEffect(() => {
@@ -53,11 +57,11 @@ export default function ProfilePage({ setCurrentPage, user, onUpdateUser }: Prof
         if (user?._id && token) {
           console.log('🔄 Cargando datos frescos del usuario...');
           
-          const response = await fetch(`http://localhost:6001/int/user/find/${user._id}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
+        const response = await fetch(`${API_URL}/int/user/find/${user._id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+});
           
           if (response.ok) {
             const userData = await response.json();
@@ -133,14 +137,14 @@ export default function ProfilePage({ setCurrentPage, user, onUpdateUser }: Prof
 
       console.log('📤 Enviando actualización:', updateData);
 
-      const response = await fetch(`http://localhost:6001/int/user/update/${currentUser?._id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updateData)
-      });
+ const response = await fetch(`${API_URL}/int/user/update/${currentUser?._id}`, {
+  method: 'PATCH',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify(updateData)
+});
 
       const data = await response.json();
       console.log('📥 Respuesta del servidor:', data);
@@ -196,16 +200,16 @@ export default function ProfilePage({ setCurrentPage, user, onUpdateUser }: Prof
       const token = localStorage.getItem('accessToken');
       
       // Primero verificar la contraseña actual
-      const loginResponse = await fetch('http://localhost:6001/int/user/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          nombre: currentUser?.nombre,
-          password: formData.currentPassword
-        })
-      });
+    const loginResponse = await fetch(`${API_URL}/int/user/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        nombre: currentUser?.nombre,
+        password: formData.currentPassword
+      })
+});
 
       if (!loginResponse.ok) {
         showMessage('❌ Contraseña actual incorrecta', 'error');
@@ -214,16 +218,16 @@ export default function ProfilePage({ setCurrentPage, user, onUpdateUser }: Prof
       }
 
       // Si la contraseña actual es correcta, actualizar
-      const updateResponse = await fetch(`http://localhost:6001/int/user/update/${currentUser?._id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          password: formData.newPassword
-        })
-      });
+    const updateResponse = await fetch(`${API_URL}/int/user/update/${currentUser?._id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        password: formData.newPassword
+      })
+    });
 
       const data = await updateResponse.json();
 
@@ -705,3 +709,4 @@ export default function ProfilePage({ setCurrentPage, user, onUpdateUser }: Prof
   </div>
 );
 }
+

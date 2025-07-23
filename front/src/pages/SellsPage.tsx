@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaShoppingCart, FaUser, FaCalendarAlt, FaDollarSign, FaEdit, FaTrash, FaEye, FaBoxOpen } from "react-icons/fa";
 import apiService from "../services/api";
+import Swal from 'sweetalert2';
 import { FaPlus } from "react-icons/fa"; 
 
 
@@ -294,83 +295,93 @@ const getUserName = (id) => {
     return (now.getTime() - fechaVenta.getTime()) / (1000 * 60 * 60) <= 1;
   };
 
-  const handleCreateSale = async (e) => {
-    e.preventDefault();
-    if (cart.length === 0) {
-      alert('Agrega al menos un producto al carrito');
+ const handleCreateSale = async (e) => {
+  e.preventDefault();
+  if (cart.length === 0) {
+    Swal.fire('Carrito vacío', 'Agrega al menos un producto al carrito', 'warning');
+    return;
+  }
+  for (const item of cart) {
+    const ingredientCheck = checkIngredientsAvailability(item.nombre, item.cantidad);
+    if (!ingredientCheck.available) {
+      Swal.fire('Stock insuficiente', ingredientCheck.message, 'error');
       return;
     }
-    for (const item of cart) {
-      const ingredientCheck = checkIngredientsAvailability(item.nombre, item.cantidad);
-      if (!ingredientCheck.available) {
-        alert(ingredientCheck.message);
-        return;
-      }
+  }
+  try {
+    const saleData = {
+      productos: cart,
+      total: calculateTotal(),
+      vendedor_id: vendedorId,
+      status: "activo"
+    };
+    await apiService.createSell(saleData);
+    setCart([]);
+    setShowCreateModal(false);
+    loadData();
+    Swal.fire('Venta creada', 'Venta creada exitosamente y stock actualizado', 'success');
+  } catch (error) {
+    console.error('Error creando venta:', error);
+    if (error.response?.data?.message) {
+      Swal.fire('Error', error.response.data.message, 'error');
+    } else {
+      Swal.fire('Error', 'Error al crear la venta', 'error');
     }
-    try {
-      const saleData = {
-        productos: cart,
-        total: calculateTotal(),
-        vendedor_id: vendedorId,
-        status: "activo"
-      };
-      await apiService.createSell(saleData);
-      setCart([]);
-      setShowCreateModal(false);
-      loadData();
-      alert('Venta creada exitosamente y stock actualizado');
-    } catch (error) {
-      console.error('Error creando venta:', error);
-      if (error.response?.data?.message) {
-        alert(error.response.data.message);
-      } else {
-        alert('Error al crear la venta');
-      }
-    }
-  };
+  }
+};
 
   // Editar venta
-  const handleEditSell = async () => {
-    if (!selectedSell) return;
-    try {
-      const saleData = {
-        productos: editCart,
-        total: editCart.reduce((total, item) => total + item.subtotal, 0),
-        vendedor_id: selectedSell.vendedor_id,
-        status: selectedSell.status
-      };
-      await apiService.updateSell(selectedSell._id, saleData);
-      setShowEditModal(false);
-      setSelectedSell(null);
-      loadData();
-      alert('Venta editada exitosamente');
-    } catch (error) {
-      console.error('Error editando venta:', error);
-      alert('Error al editar la venta');
-    }
-  };
+const handleEditSell = async () => {
+  if (!selectedSell) return;
+  try {
+    const saleData = {
+      productos: editCart,
+      total: editCart.reduce((total, item) => total + item.subtotal, 0),
+      vendedor_id: selectedSell.vendedor_id,
+      status: selectedSell.status
+    };
+    await apiService.updateSell(selectedSell._id, saleData);
+    setShowEditModal(false);
+    setSelectedSell(null);
+    loadData();
+    Swal.fire('Venta actualizada', 'Venta editada exitosamente', 'success');
+  } catch (error) {
+    console.error('Error editando venta:', error);
+    Swal.fire('Error', 'Error al editar la venta', 'error');
+  }
+};
+
 
   // Eliminar venta (solo si dentro de 15 días)
-  const handleDeleteSell = async (sellId) => {
-    const sell = sells.find(s => s._id === sellId);
-    if (!sell) return;
-    const now = new Date();
-    const fechaVenta = new Date(sell.fecha);
-    if ((now.getTime() - fechaVenta.getTime()) / (1000 * 60 * 60 * 24) > 15) {
-      alert('Solo puedes eliminar ventas realizadas en los últimos 15 días');
-      return;
-    }
-    if (confirm('¿Estás seguro de eliminar esta venta?')) {
-      try {
-        await apiService.deleteSell(sellId);
-        loadData();
-        alert('Venta eliminada exitosamente');
-      } catch (error) {
-        console.error('Error eliminando venta:', error);
-        alert('Error al eliminar la venta');
-      }
-    }
-  };
+const handleDeleteSell = async (sellId) => {
+  const sell = sells.find(s => s._id === sellId);
+  if (!sell) return;
+  const now = new Date();
+  const fechaVenta = new Date(sell.fecha);
+  if ((now.getTime() - fechaVenta.getTime()) / (1000 * 60 * 60 * 24) > 15) {
+    Swal.fire('No permitido', 'Solo puedes eliminar ventas realizadas en los últimos 15 días', 'warning');
+    return;
+  }
+  const result = await Swal.fire({
+    title: '¿Eliminar venta?',
+    text: '¿Estás seguro de eliminar esta venta?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  });
+  if (!result.isConfirmed) return;
+  try {
+    await apiService.deleteSell(sellId);
+    loadData();
+    Swal.fire('Eliminada', 'Venta eliminada exitosamente', 'success');
+  } catch (error) {
+    console.error('Error eliminando venta:', error);
+    Swal.fire('Error', 'Error al eliminar la venta', 'error');
+  }
+};
 
   const openViewModal = (sell) => {
     setSelectedSell(sell);

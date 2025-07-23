@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { FaPlus } from "react-icons/fa"; 
-import { FaUserTie } from "react-icons/fa"; 
-
+import { FaPlus, FaUserTie } from "react-icons/fa";
+import Swal from 'sweetalert2';
 
 
 interface User {
@@ -40,6 +39,7 @@ export default function UsersPage({ setCurrentPage }: UsersPageProps) {
   });
 
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'light';
@@ -136,17 +136,17 @@ export default function UsersPage({ setCurrentPage }: UsersPageProps) {
 
   const t = texts[language] || texts.es;
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('accessToken');
-      
-      const response = await fetch("http://localhost:6001/int/user/all", {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+const fetchUsers = async () => {
+  try {
+    setLoading(true);
+    const token = localStorage.getItem('accessToken');
+    
+    const response = await fetch(`${API_URL}/int/user/all`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
 
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
@@ -231,13 +231,12 @@ export default function UsersPage({ setCurrentPage }: UsersPageProps) {
     }
 
     try {
-      const token = localStorage.getItem('accessToken');
-      const url = editingUser 
-        ? `http://localhost:6001/int/user/update/${editingUser._id}`
-        : 'http://localhost:6001/int/user/save';
-      
+        const token = localStorage.getItem('accessToken');
+    const url = editingUser 
+      ? `${API_URL}/int/user/update/${editingUser._id}`
+      : `${API_URL}/int/user/save`;
       const method = editingUser ? 'PATCH' : 'POST';
-      
+
       const body: any = {
         nombre: formData.nombre,
         apellidos: formData.apellidos,
@@ -277,38 +276,59 @@ export default function UsersPage({ setCurrentPage }: UsersPageProps) {
         showMessage(data.message || 'Error al procesar la solicitud', 'error');
       }
     } catch (error) {
-      showMessage('Error de conexión con el servidor', 'error');
-    }
-  };
-
-  const handleDeleteUser = async (userId: string, userName: string) => {
-    if (userId === currentUser._id) {
-      showMessage('No puedes eliminar tu propio usuario', 'error');
-      return;
-    }
-
-    if (confirm(`¿Estás seguro de que deseas eliminar al usuario ${userName}?`)) {
-      try {
-        const token = localStorage.getItem('accessToken');
-        const response = await fetch(`http://localhost:6001/int/user/delete/${userId}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          showMessage('Usuario eliminado exitosamente', 'success');
-          fetchUsers();
-        } else {
-          const data = await response.json();
-          showMessage(data.message || 'Error al eliminar usuario', 'error');
-        }
-      } catch (error) {
+      if (error instanceof Error) {
+        showMessage(`Error de conexión con el servidor: ${error.message}`, 'error');
+      } else {
         showMessage('Error de conexión con el servidor', 'error');
       }
     }
   };
+
+const handleDeleteUser = async (userId: string, userName: string) => {
+  if (userId === currentUser._id) {
+    showMessage('No puedes eliminar tu propio usuario', 'error');
+    return;
+  }
+
+  const result = await Swal.fire({
+    title: '¿Eliminar usuario?',
+    text: `¿Estás seguro de que deseas eliminar a ${userName}?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: theme === 'dark' ? '#d33' : '#A0522D',
+    cancelButtonColor: theme === 'dark' ? '#3085d6' : '#A0522D',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
+    background: theme === 'dark' ? '#1C1611' : '#FDF6E3',
+    color: theme === 'dark' ? '#F5E6D3' : '#3E2723',
+  });
+
+  if (result.isConfirmed) {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${API_URL}/int/user/delete/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        showMessage('Usuario eliminado exitosamente', 'success');
+        fetchUsers();
+      } else {
+        const data = await response.json();
+        showMessage(data.message || 'Error al eliminar usuario', 'error');
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        showMessage(`Error de conexión con el servidor: ${error.message}`, 'error');
+      } else {
+        showMessage('Error de conexión con el servidor', 'error');
+      }
+    }
+  }
+};
 
   const getRoleBadgeClass = (role: string) => {
     const baseClasses = theme === 'dark' 
@@ -573,20 +593,36 @@ if (loading) {
               </div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
-              <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                user.status === 'activo' 
-                  ? theme === 'dark' 
-                    ? 'bg-green-900 text-green-200' 
-                    : 'bg-green-100 text-green-800'
-                  : theme === 'dark'
+              {(() => {
+                let statusClass = '';
+                if (user.status === 'activo') {
+                  statusClass = theme === 'dark'
+                    ? 'bg-green-900 text-green-200'
+                    : 'bg-green-100 text-green-800';
+                } else {
+                  statusClass = theme === 'dark'
                     ? 'bg-red-900 text-red-200'
-                    : 'bg-red-100 text-red-800'
-              }`}>
-                {user.status === 'activo' ? `✅ ${t.active}` : `❌ ${t.inactive}`}
-              </span>
+                    : 'bg-red-100 text-red-800';
+                }
+                const statusText = user.status === 'activo'
+                  ? `✅ ${t.active}`
+                  : `❌ ${t.inactive}`;
+                return (
+                  <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${statusClass}`}>
+                    {statusText}
+                  </span>
+                );
+              })()}
             </td>
             <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-              {user.creadoEn ? new Date(user.creadoEn).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US') : 'N/A'}
+              {(() => {
+                let dateText = 'N/A';
+                if (user.creadoEn) {
+                  const locale = language === 'es' ? 'es-ES' : 'en-US';
+                  dateText = new Date(user.creadoEn).toLocaleDateString(locale);
+                }
+                return dateText;
+              })()}
             </td>
             {(currentUser.role === 'admin' || currentUser.role === 'gerente') && (
               <td className={`px-6 py-4 whitespace-nowrap text-right text-sm font-medium ${theme === 'dark' ? '' : 'text-gray-900'}`}>
@@ -666,25 +702,29 @@ if (loading) {
     {editingUser ? `✏️ ${t.editingUser}` : `➕ ${t.creatingUser}`}
   </h2>
   {/* Message Alert - ahora arriba de los campos */}
-  {message && (
-    <div
-      className={`mb-4 px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 border font-bold text-base justify-center ${
-        messageType === 'success'
-          ? theme === 'dark'
-            ? 'bg-green-900 text-green-200 border-green-700'
-            : 'bg-green-50 text-green-700 border-green-200'
-          : theme === 'dark'
-            ? 'bg-red-900 text-red-200 border-red-700'
-            : 'bg-red-50 text-red-700 border-red-200'
-      }`}
-      style={{ minHeight: '48px' }}
-    >
-      <span className="text-2xl">
-        {messageType === 'success' ? '✅' : '⚠️'}
-      </span>
-      <span className="text-lg">{message}</span>
-    </div>
-  )}
+  {message && (() => {
+    let alertClass = '';
+    if (messageType === 'success') {
+      alertClass = theme === 'dark'
+        ? 'bg-green-900 text-green-200 border-green-700'
+        : 'bg-green-50 text-green-700 border-green-200';
+    } else {
+      alertClass = theme === 'dark'
+        ? 'bg-red-900 text-red-200 border-red-700'
+        : 'bg-red-50 text-red-700 border-red-200';
+    }
+    return (
+      <div
+        className={`mb-4 px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 border font-bold text-base justify-center ${alertClass}`}
+        style={{ minHeight: '48px' }}
+      >
+        <span className="text-2xl">
+          {messageType === 'success' ? '✅' : '⚠️'}
+        </span>
+        <span className="text-lg">{message}</span>
+      </div>
+    );
+  })()}
 
 
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import apiService from "../services/api";
+import Swal from 'sweetalert2';
 
 type Product = {
   _id: string;
@@ -441,27 +442,28 @@ const removeExtraIngredient = (productId, ingredientName) => {
     return cart.reduce((total, item) => total + item.subtotal, 0);
   };
 
-  const handleCompleteSale = async () => {
-    if (cart.length === 0) return;
-
-    try {
-      const saleData = {
-        productos: cart,
-        total: calculateTotal(),
-        vendedor_id: vendedorId,
-        status: "activo"
-      };
-      
-      await apiService.createSell(saleData);
-      setCart([]);
-      setShowSaleModal(false);
-      loadDashboardData(); // Recargar datos para actualizar stats
-      alert('Venta creada exitosamente');
-    } catch (error) {
-      console.error('Error creando venta:', error);
-      alert('Error al crear la venta');
-    }
-  };
+const handleCompleteSale = async () => {
+  if (cart.length === 0) {
+    Swal.fire('Carrito vacío', 'Agrega al menos un producto al carrito', 'warning');
+    return;
+  }
+  try {
+    const saleData = {
+      productos: cart,
+      total: calculateTotal(),
+      vendedor_id: vendedorId,
+      status: "activo"
+    };
+    await apiService.createSell(saleData);
+    setCart([]);
+    setShowSaleModal(false);
+    loadDashboardData();
+    Swal.fire('Venta creada', 'Venta creada exitosamente y stock actualizado', 'success');
+  } catch (error) {
+    console.error('Error creando venta:', error);
+    Swal.fire('Error', 'Error al crear la venta', 'error');
+  }
+};
 
   const handleNewSale = () => setShowSaleModal(true);
   const handleInventory = () => setCurrentPage('stock');
